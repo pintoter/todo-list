@@ -5,7 +5,7 @@ import (
 
 	"github.com/pintoter/todo-list/internal/config"
 	migrations "github.com/pintoter/todo-list/internal/database"
-	"github.com/pintoter/todo-list/internal/repository"
+	"github.com/pintoter/todo-list/internal/service"
 	"github.com/pintoter/todo-list/pkg/database/postgres"
 )
 
@@ -19,7 +19,6 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	repo := repository.New(db)
+	service := service.New(db)
 
-	
 }

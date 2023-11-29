@@ -23,6 +23,16 @@ func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	return 0, nil
 }
 
+func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
+
+	return entity.Note{}, nil
+}
+
+func (n *NotesRepo) GetAll(ctx context.Context, limit, offset int) ([]entity.Note, error) {
+
+	return nil, nil
+}
+
 func (n *NotesRepo) GetByStatus(ctx context.Context, status string, limit, offset int) ([]entity.Note, error) {
 
 	return nil, nil

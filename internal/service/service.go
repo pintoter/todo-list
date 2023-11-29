@@ -1,4 +1,4 @@
-package repository
+package service
 
 import (
 	"context"
@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
+	"github.com/pintoter/todo-list/internal/repository"
 )
 
-type Notes interface {
+type INotesRepository interface {
 	Create(ctx context.Context, note entity.Note) (int, error)
 	GetByTitle(ctx context.Context, title string) (entity.Note, error)
 	GetAll(ctx context.Context, limit, offset int) ([]entity.Note, error)
@@ -19,12 +20,16 @@ type Notes interface {
 	DeleteByTitle(ctx context.Context, title string) error
 }
 
-type Repository struct {
-	Notes
+type IRepository interface {
+	INotesRepository
 }
 
-func New(db *sql.DB) *Repository {
-	return &Repository{
-		Notes: NewNotes(db),
+type Service struct {
+	repo IRepository
+}
+
+func New(db *sql.DB) *Service {
+	return &Service{
+		repo: repository.New(db),
 	}
 }
