@@ -118,11 +118,17 @@ func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if input.Date != "" {
+		_, err = time.Parse(format, input.Date)
+		if err != nil {
+			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidDate.Error())
+			return
+		}
+	}
+
 	notes, err := h.service.GetNotes(context.Background(), input.Limit, (page-1)*input.Offset, input.Status, input.Date)
 	if err != nil {
-		if errors.Is(err, entity.ErrInvalidDate) {
-			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidDate.Error())
-		} else if errors.Is(err, entity.ErrInvalidStatus) {
+		if errors.Is(err, entity.ErrInvalidStatus) {
 			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidStatus.Error())
 		} else if errors.Is(err, entity.ErrNoteExists) {
 			newErrorResponse(w, r, http.StatusNotFound, entity.ErrNoteExists.Error())

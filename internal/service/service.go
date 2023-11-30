@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
 	"github.com/pintoter/todo-list/internal/repository"
@@ -13,9 +12,7 @@ type INotesRepository interface {
 	Create(ctx context.Context, note entity.Note) (int, error)
 	GetByTitle(ctx context.Context, title string) (entity.Note, error)
 	GetById(ctx context.Context, id int) (entity.Note, error)
-	GetNotes(ctx context.Context, limit, offset int) ([]entity.Note, error)
-	GetNotesByStatus(ctx context.Context, limit, offset int, status string) ([]entity.Note, error)
-	GetNotesByStatusAndDate(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error)
+	GetNotes(ctx context.Context, limit, offset int, status string, date string) ([]entity.Note, error)
 	UpdateNote(ctx context.Context, id int, title, description, status string) error
 	DeleteById(ctx context.Context, id int) error
 	DeleteNotes(ctx context.Context) error

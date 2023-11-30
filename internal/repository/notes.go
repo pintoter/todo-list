@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -11,7 +10,8 @@ import (
 )
 
 const (
-	notes = "notes"
+	notes  = "notes"
+	format = "2006-01-02"
 )
 
 type NotesRepo struct {
@@ -23,17 +23,6 @@ func NewNotes(db *sql.DB) *NotesRepo {
 		db: db,
 	}
 }
-
-/*
-db, err := sql.Open("mysql", *dsn)
-if err != nil {
-    log.Fatal(err)
-}
-
-db.SetMaxOpenConns(100)
-db.SetMaxIdleConns(5)
-
-*/
 
 func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
@@ -118,9 +107,7 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 	return note, tx.Commit()
 }
 
-func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int) ([]entity.Note, error) {
-	log.Println("YA ZDES")
-
+func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status string, date string) ([]entity.Note, error) {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -135,92 +122,14 @@ func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int) ([]entity.N
 		OrderBy("id ASC").
 		PlaceholderFormat(sq.Dollar)
 
-	if limit != 0 {
-		builderSelect = builderSelect.Limit(uint64(limit)).Offset(uint64(offset))
+	if status != "" {
+		builderSelect = builderSelect.Where(sq.Eq{"status": status})
 	}
 
-	query, args, err := builderSelect.ToSql()
-	if err != nil {
-		return nil, err
+	if date != "" {
+		dateFormatted, _ := time.Parse(format, date)
+		builderSelect = builderSelect.Where(sq.Eq{"date": dateFormatted})
 	}
-
-	var notes []entity.Note
-
-	rows, err := tx.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var note entity.Note
-		if err := rows.Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status); err != nil {
-			return notes, err
-		}
-		notes = append(notes, note)
-	}
-
-	return notes, tx.Commit()
-}
-
-func (n *NotesRepo) GetNotesByStatus(ctx context.Context, limit, offset int, status string) ([]entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	builderSelect := sq.Select("*").
-		From(notes).
-		Where(sq.Eq{"status": status}).
-		PlaceholderFormat(sq.Dollar)
-
-	if limit != 0 {
-		builderSelect = builderSelect.Limit(uint64(limit)).Offset(uint64(offset))
-	}
-
-	query, args, err := builderSelect.ToSql()
-	if err != nil {
-		return nil, err
-	}
-
-	var notes []entity.Note
-	rows, err := tx.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var note entity.Note
-		if err := rows.Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status); err != nil {
-			return notes, err
-		}
-		notes = append(notes, note)
-	}
-
-	return notes, tx.Commit()
-}
-
-func (n *NotesRepo) GetNotesByStatusAndDate(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	builderSelect := sq.Select("*").
-		From(notes).
-		Where(sq.Eq{"status": status}).
-		Where(sq.Eq{"date": date}).
-		OrderBy("id ASC").
-		PlaceholderFormat(sq.Dollar)
 
 	if limit != 0 {
 		builderSelect = builderSelect.Limit(uint64(limit)).Offset(uint64(offset))

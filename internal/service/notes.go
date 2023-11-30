@@ -4,13 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
-)
-
-const (
-	format = "2006-01-02"
 )
 
 func (s *Service) CreateNote(ctx context.Context, note entity.Note) (int, error) {
@@ -35,27 +30,7 @@ func (s *Service) GetNotes(ctx context.Context, limit, offset int, status, date 
 		return nil, entity.ErrInvalidStatus
 	}
 
-	var notes []entity.Note
-	var err error
-
-	switch {
-	case date != "" && status != "":
-		var dateFormatted time.Time
-		var err error
-		if date != "" {
-			dateFormatted, err = time.Parse(format, date)
-			if err != nil {
-				return nil, entity.ErrInvalidDate
-			}
-		}
-
-		notes, err = s.repo.GetNotesByStatusAndDate(ctx, limit, offset, status, dateFormatted)
-	case status != "":
-		notes, err = s.repo.GetNotesByStatus(ctx, limit, offset, status)
-	default:
-		notes, err = s.repo.GetNotes(ctx, limit, offset)
-	}
-
+	notes, err := s.repo.GetNotes(ctx, limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}
