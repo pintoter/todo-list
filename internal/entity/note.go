@@ -6,7 +6,6 @@ type Note struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdateAt    time.Time `json:"updated_at"`
+	Date        time.Time `json:"date"`
 	Status      string    `json:"status"`
 }

@@ -1,3 +1,7 @@
+BEGIN;
+
 DROP TABLE IF EXISTS notes;
 
-DROP TYPE IF EXISTS task_status;
+DROP TYPE IF EXISTS note_status;
+
+COMMIT;

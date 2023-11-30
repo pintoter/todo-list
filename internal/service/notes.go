@@ -9,9 +9,17 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func (s *Service) Create(ctx context.Context, note entity.Note) (int, error) {
+func (s *Service) CreateNote(ctx context.Context, note entity.Note) (int, error) {
+	if s.isNoteExists(ctx, note.Title) {
+		return 0, entity.ErrNoteExists
+	}
 
-	return 0, nil
+	return s.repo.Create(ctx, note)
+}
+
+func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
+
+	return entity.Note{}, nil
 }
 
 func (s *Service) GetAll(ctx context.Context, limit, offset int) ([]entity.Note, error) {
@@ -44,8 +52,8 @@ func (s *Service) DeleteByTitle(ctx context.Context, title string) error {
 	return nil
 }
 
-func (s *Service) isNoteExists(ctx context.Context, note entity.Note) bool {
-	_, err := s.repo.GetByTitle(ctx, note.Title)
+func (s *Service) isNoteExists(ctx context.Context, title string) bool {
+	_, err := s.repo.GetByTitle(ctx, title)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return false
 	}
