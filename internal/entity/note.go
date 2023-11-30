@@ -9,3 +9,8 @@ type Note struct {
 	Date        time.Time `json:"date"`
 	Status      string    `json:"status"`
 }
+
+const (
+	StatusDone    = "done"
+	StatusNotDone = "not_done"
+)

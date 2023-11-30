@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
 const (
-	layout = "2006-01-02"
+	format = "2006-01-02"
 )
 
 type createNoteInput struct {
@@ -35,9 +37,10 @@ func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	date, err := time.Parse(layout, input.Date)
+	date, err := time.Parse(format, input.Date)
 	if err != nil {
 		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+		return
 	}
 
 	note := entity.Note{
@@ -60,248 +63,140 @@ func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
 	newResponse(w, r, http.StatusCreated, id)
 }
 
-// type getNoteResponse struct {
-// 	Note entity.Note `json:"note"`
-// }
+type getNoteResponse struct {
+	Note entity.Note `json:"note"`
+}
 
-// func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-// 	id := params["id"]
+func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-// 	noteId, _ := strconv.Atoi(id)
+	note, err := h.service.GetById(ctx, id)
+	if err != nil {
+		if errors.Is(err, entity.ErrNoteNotExits) {
+			newErrorResponse(w, r, http.StatusNotFound, entity.ErrNoteNotExits.Error())
+		} else {
+			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
 
-// 	note, err := h.service.GetById(context.Background(), noteId)
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrArticleNotFound.Error(), http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
+	newResponse(w, r, http.StatusOK, getNoteResponse{Note: note})
+}
 
-// 	resp, _ := json.Marshal(createNoteResponse{
-// 		Note: note,
-// 	})
+type getNotesRequest struct {
+	Status string `json:"status,omitempty"`
+	Date   string `json:"date,omitempty"`
+	Limit  int    `json:"limit,omitempty"  binding:"required,min=1"`
+	Offset int    `json:"offset,omitempty" binding:"required,min=1"`
+}
 
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusCreated)
-// 	w.Write(resp)
-// }
+type getNotesResponse struct {
+	Notes []entity.Note `json:"notes"`
+}
 
-// type getNoteResponse struct {
-// 	Note []entity.Note `json:"note"`
-// }
+func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
+	var input getNotesRequest
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		newErrorResponse(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
-// func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-// 	id := params["id"]
+	var page int = 1
+	queryPage := r.URL.Query().Get("page")
+	if queryPage != "" {
+		page, err = strconv.Atoi(queryPage)
+		if err != nil || page < 0 {
+			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidPage.Error())
+			return
+		}
+	}
 
-// 	noteId, _ := strconv.Atoi(id)
+	if input.Limit <= 0 || input.Offset < 0 {
+		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+		return
+	}
 
-// 	note, err := h.service.GetNote(context.Background(), noteId)
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrArticleNotFound.Error(), http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
+	notes, err := h.service.GetNotes(context.Background(), input.Limit, (page-1)*input.Offset, input.Status, input.Date)
+	if err != nil {
+		if errors.Is(err, entity.ErrInvalidDate) {
+			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidDate.Error())
+		} else if errors.Is(err, entity.ErrInvalidStatus) {
+			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidStatus.Error())
+		} else if errors.Is(err, entity.ErrNoteExists) {
+			newErrorResponse(w, r, http.StatusNotFound, entity.ErrNoteExists.Error())
+		} else {
+			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
 
-// 	resp, _ := json.Marshal(getNoteResponse{
-// 		note: note,
-// 	})
+	newResponse(w, r, http.StatusOK, getNotesResponse{Notes: notes})
+}
 
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusCreated)
-// 	w.Write(resp)
-// }
+type updateNoteInput struct {
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+}
 
-// type getNotesResponse struct {
-// 	Notes []entity.Note `json:"notes"`
-// }
+type updateNoteResponse struct {
+	Message string `json:"message"`
+}
 
-// func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
-// 	var limit, offest int = 3, 0
-// 	var curStatus = "not done" // ??
-// 	var t time.Time
+func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-// 	page := r.URL.Query().Get("page")
-// 	if page != "" {
-// 		limit, err = strconv.Atoi(page)
-// 		if err != nil || limit <= 0 {
-// 			http.Error(w, entity.ErrInvalidId.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-// 	}
+	var input updateNoteInput
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil || (input.Title == "" && input.Description == "" && input.Status == "") {
+		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+		return
+	}
 
-// 	count := r.URL.Query().Get("count")
-// 	if count != "" {
-// 		offset, err = strconv.Atoi(count)
-// 		if err != nil || offset < 0 {
-// 			http.Error(w, entity.ErrInvalidId.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-// 	}
+	err = h.service.UpdateNote(ctx, id, input.Title, input.Description, input.Status)
+	if err != nil {
+		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+	}
 
-// 	queryStatus := r.URL.Query().Get("status")
-// 	if queryStatus != "" && (queryStatus != statusDone || queryStatus != statusNotDone) {
-// 		http.Error(w, entity.ErrInvalidStatus.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	newResponse(w, r, http.StatusAccepted, updateNoteResponse{Message: "Successfully update"})
+}
 
-// 	queryDate := r.URL.Query().Get("date")
-// 	if queryDate != "" {
-// 		t, err = time.Parse(layoutISO, queryDate)
-// 		if err != nil {
-// 			http.Error(w, entity.ErrInvalidDate.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-// 	}
+type deleteNoteResponse struct {
+	Message string `json:"message"`
+}
 
-// 	if queryStatus == "" && queryOrder != "" {
-// 		http.Error(w, entity.ErrInvalidFilter.Error(), http.StatusBadRequest)
-// 		return
-// 	} else {
-// 		curOrder = queryOrder
-// 	}
+func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-// 	var notes []entity.Note
+	err := h.service.DeleteById(ctx, id)
+	if err != nil {
+		if errors.Is(err, entity.ErrNoteExists) {
+			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrNoteExists.Error())
+			return
+		} else {
+			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
 
-// 	switch {
-// 	case queryStatus != "" && queryOrder != "":
-// 		note, err = h.service.GetByDateAndStatus(context.Background(), "ASC", "DONE", limit, offset) // asc или desc
-// 	case queryStatus != "":
-// 		note, err = h.service.GetByDateAndStatus(context.Background(), "ASC", limit, offset) // asc или desc
-// 	default:
-// 		note, err = h.service.GetAll(context.Background(), limit, offset)
-// 	}
+	newResponse(w, r, http.StatusOK, deleteNoteResponse{Message: "Succesfully delete note"})
+}
 
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrArticleNotFound.Error(), http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
+type deleteNotesResponse struct {
+	Message string `json:"message"`
+}
 
-// 	resp, _ := json.Marshal(getNotesResponse{
-// 		notes: notes,
-// 	})
+func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	err := h.service.DeleteNotes(ctx)
+	if err != nil {
+		newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusCreated)
-// 	w.Write(resp)
-// }
-
-// type updateNoteStatusInput struct {
-// 	Status string `json:"status"`
-// }
-
-// func (h *Handler) updateNoteStatusHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-// 	id := params["id"]
-
-// 	noteId, _ := strconv.Atoi(id)
-
-// 	var input createNoteInput
-
-// 	err := json.NewDecoder(r.Body).Decode(&input)
-// 	if err != nil {
-// 		http.Error(w, entity.ErrInvalidId.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	err := h.service.UpdateStatus(ctx, noteId, input.Status)
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrArticleNotFound.Error(), http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
-
-// 	resp, _ := json.Marshal(getNoteResponse{
-// 		note: note,
-// 	})
-
-// 	// ПОДУМАТЬ ЧТО ОТДАВАТЬ
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusNoContent)
-// 	w.Write(resp)
-// }
-
-// type updateNoteInfoInput struct {
-// 	Title       string `json:"title,omitempty"`
-// 	Description string `json:"description,omitempty"`
-// }
-
-// func (h *Handler) updateNoteInfoHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-// 	id := params["id"]
-
-// 	noteId, _ := strconv.Atoi(id)
-
-// 	var input updateNoteInfoInput
-
-// 	err := json.NewDecoder(r.Body).Decode(&input)
-// 	if err != nil {
-// 		http.Error(w, entity.ErrInvalidId.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	err := h.service.UpdateInfo(ctx, noteId, input.Title, input.Description)
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrNoteNotFound.Error(), http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
-
-// 	resp, _ := json.Marshal(getNoteResponse{
-// 		note: note,
-// 	})
-
-// 	// ПОДУМАТЬ ЧТО ОТДАВАТЬ
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusCreated)
-// 	w.Write(resp)
-// }
-
-// func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-// 	id := params["id"]
-
-// 	noteId, _ := strconv.Atoi(id)
-
-// 	err := h.service.DeleteById(ctx, noteId)
-// 	if err != nil {
-// 		if errors.Is(err, entity.ErrNoteNotFound) {
-// 			http.Error(w, entity.ErrNoteNotFound.Error(), http.StatusBadRequest)
-// 		} else {
-// 			http.Error(w, http.StatusInternalServerError, http.StatusNotFound)
-// 		}
-// 		return
-// 	}
-
-// 	// ПОДУМАТЬ ЧТО ОТДАВАТЬ
-// 	w.WriteHeader(http.StatusNoContent)
-// 	w.Write(nil) // ?
-// }
-
-// func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
-// 	err := h.service.DeleteNotes(ctx)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// ПОДУМАТЬ ЧТО ОТДАВАТЬ
-// 	w.WriteHeader(http.StatusNoContent)
-// 	w.Write(nil) // ?
-// }
+	newResponse(w, r, http.StatusOK, deleteNotesResponse{Message: "Succesfully delete all notes"})
+}

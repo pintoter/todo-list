@@ -41,20 +41,20 @@ func NewHandler(service *service.Service) *Handler {
 		service: service,
 	}
 
-	handler.AddV1Routes()
+	handler.InitRoutes()
 
 	return handler
 }
 
-func (h *Handler) AddV1Routes() {
+func (h *Handler) InitRoutes() {
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()
 	{
 		v1.HandleFunc("/note", h.createNoteHandler).Methods("POST")
-		// h.router.HandleFunc("/note", h.getNotesHandler).Methods("GET")
+		v1.HandleFunc("/note", h.getNotesHandler).Methods("GET")
+		v1.HandleFunc("/note/{id:[0-9]+}/update", h.updateNoteHandler).Methods("PATCH")
 		// h.router.HandleFunc("/note", h.deleteNotesHandler).Methods("DELETE")
 		// h.router.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods("GET")
 		// h.router.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods("DELETE")
-		// h.router.HandleFunc("/note/{id:[0-9]+}/update_status", h.updateNoteStatusHandler).Methods("PATCH")
 		// h.router.HandleFunc("/note/{id:[0-9]+}/update_info", h.updateNoteInfoHandler).Methods("PATCH")
 	}
 }

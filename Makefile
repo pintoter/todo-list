@@ -8,3 +8,13 @@ build:
 
 run: build
 	./todo-list
+
+.PHONY: migrations-up
+
+migrations-up:
+	migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" up
+
+.PHONY: migrations-down
+
+migrations-down:
+	migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" down
