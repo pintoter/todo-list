@@ -54,16 +54,7 @@ func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 }
 
 func (n *NotesRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return entity.Note{}, err
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	builderSelect := sq.Select("*").From(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
+	builderSelect := sq.Select("title", "description", "date", "status").From(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builderSelect.ToSql()
 	if err != nil {
@@ -72,24 +63,15 @@ func (n *NotesRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
 
 	var note entity.Note
 
-	err = tx.QueryRowContext(ctx, query, args...).Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status)
+	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
 	}
 
-	return note, tx.Commit()
+	return note, nil
 }
 
 func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return entity.Note{}, err
-	}
-	defer func() { _ = tx.Rollback() }()
-
 	builderSelect := sq.Select("*").From(notes).Where(sq.Eq{"title": title}).PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builderSelect.ToSql()
@@ -99,24 +81,15 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 
 	var note entity.Note
 
-	err = tx.QueryRowContext(ctx, query, args...).Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status)
+	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
 	}
 
-	return note, tx.Commit()
+	return note, err
 }
 
-func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status string, date string) ([]entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = tx.Rollback() }()
-
+func getSelectBuilder(limit, offset int, status string, date string) (string, []interface{}, error) {
 	builderSelect := sq.Select("*").
 		From(notes).
 		OrderBy("id ASC").
@@ -135,14 +108,18 @@ func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status stri
 		builderSelect = builderSelect.Limit(uint64(limit)).Offset(uint64(offset))
 	}
 
-	query, args, err := builderSelect.ToSql()
+	return builderSelect.ToSql()
+}
+
+func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status string, date string) ([]entity.Note, error) {
+	query, args, err := getSelectBuilder(limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}
 
 	var notes []entity.Note
 
-	rows, err := tx.QueryContext(ctx, query, args...)
+	rows, err := n.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -156,19 +133,10 @@ func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status stri
 		notes = append(notes, note)
 	}
 
-	return notes, tx.Commit()
+	return notes, err
 }
 
-func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
-
+func getUpdateBuilder(id int, title, description, status string) (string, []interface{}, error) {
 	builderUpdate := sq.Update(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
 
 	if title != "" {
@@ -183,7 +151,20 @@ func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, 
 		builderUpdate = builderUpdate.Set("status", status)
 	}
 
-	query, args, err := builderUpdate.ToSql()
+	return builderUpdate.ToSql()
+}
+
+func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
+	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	query, args, err := getUpdateBuilder(id, title, description, status)
 	if err != nil {
 		return err
 	}

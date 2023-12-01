@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/config"
 	migrations "github.com/pintoter/todo-list/internal/database"
 	"github.com/pintoter/todo-list/internal/server"
@@ -13,6 +14,16 @@ import (
 	"github.com/pintoter/todo-list/internal/transport"
 	"github.com/pintoter/todo-list/pkg/database/postgres"
 )
+
+// @title           			todo-list
+// @version         			1.0
+// @description     			REST API for TODO app
+
+// @contact.name   				Vlad Yurasov
+// @contact.email  				meine23@yandex.ru
+
+// @host      					localhost:8080
+// @BasePath  					/api/v1
 
 func Run() {
 	cfg := config.Get()

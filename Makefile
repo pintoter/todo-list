@@ -18,3 +18,9 @@ migrations-up:
 
 migrations-down:
 	migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" down
+
+.PHONY: test
+
+test:
+	go test -coverprofile=cover.out -v ./...
+	go tool cover -html cover.out -o cover.html & open cover.html

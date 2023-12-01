@@ -5,30 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/service"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
-
-/*
-link:
-https://github.com/eliben/code-for-blog/blob/master/2021/go-rest-servers/gorilla/gorilla.go
-
- add to repository:
-email, loginTime := "human@example.com", time.Now()
-result, err := db.Exec("INSERT INTO UserAccount VALUES ($1, $2)", email, loginTime)
-if err != nil {
-  panic(err)
-}
-
-parse time:
-const (
-	layoutISO = "2006-01-02"
-	layoutUS  = "January 2, 2006"
-)
-date := "1999-12-31"
-t, _ := time.Parse(layoutISO, date)
-fmt.Println(t)                  // 1999-12-31 00:00:00 +0000 UTC
-fmt.Println(t.Format(layoutUS)) // December 31, 1999
-*/
 
 type Handler struct {
 	router  *mux.Router
@@ -47,20 +27,24 @@ func NewHandler(service *service.Service) *Handler {
 }
 
 func (h *Handler) InitRoutes() {
+	h.router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	)).Methods(http.MethodGet)
+
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()
 	{
-		v1.HandleFunc("/note", h.createNoteHandler).Methods("POST")
-		v1.HandleFunc("/note", h.getNotesHandler).Methods("GET")
-		v1.HandleFunc("/note/{id:[0-9]+}/update", h.updateNoteHandler).Methods("PATCH")
-		// h.router.HandleFunc("/note", h.deleteNotesHandler).Methods("DELETE")
-		// h.router.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods("GET")
-		// h.router.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods("DELETE")
-		// h.router.HandleFunc("/note/{id:[0-9]+}/update_info", h.updateNoteInfoHandler).Methods("PATCH")
+		v1.HandleFunc("/note", h.createNoteHandler).Methods(http.MethodPost)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNoteHandler).Methods(http.MethodPatch)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods(http.MethodGet)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods(http.MethodDelete)
+		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodGet)
 	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[%s] %s", r.Method, r.URL)
-
 	h.router.ServeHTTP(w, r)
 }
