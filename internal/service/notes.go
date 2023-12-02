@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
 )
@@ -25,12 +26,16 @@ func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
 	return note, nil
 }
 
-func (s *Service) GetNotes(ctx context.Context, limit, offset int, status, date string) ([]entity.Note, error) {
+func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
+	return s.repo.GetNotes(ctx)
+}
+
+func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
 	if status != "" && status != entity.StatusDone && status != entity.StatusNotDone {
 		return nil, entity.ErrInvalidStatus
 	}
 
-	notes, err := s.repo.GetNotes(ctx, limit, offset, status, date)
+	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}

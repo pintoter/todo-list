@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/service"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -41,6 +40,7 @@ func (h *Handler) InitRoutes() {
 		v1.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods(http.MethodGet)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods(http.MethodDelete)
 		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodGet)
+		v1.HandleFunc("/notes_extended/{page:[0-9]+}", h.getNotesExtendedHandler).Methods(http.MethodPost)
 	}
 }
 

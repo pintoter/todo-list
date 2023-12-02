@@ -23,4 +23,10 @@ migrations-down:
 
 test:
 	go test -coverprofile=cover.out -v ./...
-	go tool cover -html cover.out -o cover.html & open cover.html
+	go tool cover -html cover.out -o cover.html
+	open cover.html
+
+.PHONY: test
+
+swag:
+	swag init -g ./cmd/app/main.go

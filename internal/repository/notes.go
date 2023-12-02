@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	notes  = "notes"
-	format = "2006-01-02"
+	notes = "notes"
 )
 
 type NotesRepo struct {
@@ -72,7 +71,7 @@ func (n *NotesRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
 }
 
 func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
-	builderSelect := sq.Select("*").From(notes).Where(sq.Eq{"title": title}).PlaceholderFormat(sq.Dollar)
+	builderSelect := sq.Select("title", "description", "date", "status").From(notes).Where(sq.Eq{"title": title}).PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builderSelect.ToSql()
 	if err != nil {
@@ -81,7 +80,7 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 
 	var note entity.Note
 
-	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status)
+	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
 	}
@@ -89,19 +88,46 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 	return note, err
 }
 
-func getSelectBuilder(limit, offset int, status string, date string) (string, []interface{}, error) {
+func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 	builderSelect := sq.Select("*").
 		From(notes).
-		OrderBy("id ASC").
+		PlaceholderFormat(sq.Dollar)
+
+	query, args, err := builderSelect.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var notes []entity.Note
+
+	rows, err := n.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var note entity.Note
+		if err := rows.Scan(&note.ID, &note.Title, &note.Description, &note.Date, &note.Status); err != nil {
+			return nil, err
+		}
+		notes = append(notes, note)
+	}
+
+	return notes, err
+}
+
+func getSelectBuilder(limit, offset int, status string, date time.Time) (string, []interface{}, error) {
+	builderSelect := sq.Select("*").
+		From(notes).
 		PlaceholderFormat(sq.Dollar)
 
 	if status != "" {
 		builderSelect = builderSelect.Where(sq.Eq{"status": status})
 	}
 
-	if date != "" {
-		dateFormatted, _ := time.Parse(format, date)
-		builderSelect = builderSelect.Where(sq.Eq{"date": dateFormatted})
+	if !date.Equal(time.Time{}) {
+		builderSelect = builderSelect.Where(sq.Eq{"date": date})
 	}
 
 	if limit != 0 {
@@ -111,7 +137,7 @@ func getSelectBuilder(limit, offset int, status string, date string) (string, []
 	return builderSelect.ToSql()
 }
 
-func (n *NotesRepo) GetNotes(ctx context.Context, limit, offset int, status string, date string) ([]entity.Note, error) {
+func (n *NotesRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
 	query, args, err := getSelectBuilder(limit, offset, status, date)
 	if err != nil {
 		return nil, err
