@@ -33,11 +33,11 @@ func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	builderInsert := sq.Insert(notes).
+	builder := sq.Insert(notes).
 		Columns("title", "description", "date", "status").
 		Values(note.Title, note.Description, note.Date, note.Status).Suffix("RETURNING id").PlaceholderFormat(sq.Dollar)
 
-	query, args, err := builderInsert.ToSql()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -79,7 +79,6 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 	}
 
 	var note entity.Note
-
 	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
@@ -89,17 +88,16 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 }
 
 func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	builderSelect := sq.Select("*").
+	builder := sq.Select("id", "title", "description", "date", "status").
 		From(notes).
 		PlaceholderFormat(sq.Dollar)
 
-	query, args, err := builderSelect.ToSql()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
 
 	var notes []entity.Note
-
 	rows, err := n.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -117,34 +115,33 @@ func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 	return notes, err
 }
 
-func getSelectBuilder(limit, offset int, status string, date time.Time) (string, []interface{}, error) {
-	builderSelect := sq.Select("*").
+func getSelectQuery(limit, offset int, status string, date time.Time) (string, []interface{}, error) {
+	builder := sq.Select("id", "title", "description", "date", "status").
 		From(notes).
 		PlaceholderFormat(sq.Dollar)
 
 	if status != "" {
-		builderSelect = builderSelect.Where(sq.Eq{"status": status})
+		builder = builder.Where(sq.Eq{"status": status})
 	}
 
 	if !date.Equal(time.Time{}) {
-		builderSelect = builderSelect.Where(sq.Eq{"date": date})
+		builder = builder.Where(sq.Eq{"date": date})
 	}
 
 	if limit != 0 {
-		builderSelect = builderSelect.Limit(uint64(limit)).Offset(uint64(offset))
+		builder = builder.Limit(uint64(limit)).Offset(uint64(offset))
 	}
 
-	return builderSelect.ToSql()
+	return builder.ToSql()
 }
 
 func (n *NotesRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	query, args, err := getSelectBuilder(limit, offset, status, date)
+	query, args, err := getSelectQuery(limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}
 
 	var notes []entity.Note
-
 	rows, err := n.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -163,21 +160,21 @@ func (n *NotesRepo) GetNotesExtended(ctx context.Context, limit, offset int, sta
 }
 
 func getUpdateBuilder(id int, title, description, status string) (string, []interface{}, error) {
-	builderUpdate := sq.Update(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
+	builder := sq.Update(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
 
 	if title != "" {
-		builderUpdate = builderUpdate.Set("title", title)
+		builder = builder.Set("title", title)
 	}
 
 	if description != "" {
-		builderUpdate = builderUpdate.Set("description", description)
+		builder = builder.Set("description", description)
 	}
 
 	if status != "" {
-		builderUpdate = builderUpdate.Set("status", status)
+		builder = builder.Set("status", status)
 	}
 
-	return builderUpdate.ToSql()
+	return builder.ToSql()
 }
 
 func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
@@ -213,9 +210,9 @@ func (n *NotesRepo) DeleteById(ctx context.Context, id int) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	builderUpdate := sq.Delete(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
+	builder := sq.Delete(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
 
-	query, args, err := builderUpdate.ToSql()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return err
 	}
@@ -238,9 +235,9 @@ func (n *NotesRepo) DeleteNotes(ctx context.Context) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	builderUpdate := sq.Delete(notes).PlaceholderFormat(sq.Dollar)
+	builder := sq.Delete(notes).PlaceholderFormat(sq.Dollar)
 
-	query, args, err := builderUpdate.ToSql()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return err
 	}
