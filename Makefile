@@ -13,6 +13,9 @@ build:
 run: build
 	docker-compose up --remove-orphans
 
+rebuild: build
+	docker-compose up --remove-orphans --build
+
 .PHONY: stop
 stop:
 	docker-compose down --remove-orphans

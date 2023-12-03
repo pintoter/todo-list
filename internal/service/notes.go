@@ -54,19 +54,19 @@ func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, statu
 }
 
 func (s *Service) UpdateNote(ctx context.Context, id int, title, description, status string) error {
-	if s.isNoteExists(ctx, id) {
-		return entity.ErrNoteNotExists
+	if s.isNoteExists(ctx, id) || !s.isNoteExists(ctx, title) {
+		return s.repo.UpdateNote(ctx, id, title, description, status)
 	}
 
-	return s.repo.UpdateNote(ctx, id, title, description, status)
+	return entity.ErrNoteNotExists
 }
 
 func (s *Service) DeleteById(ctx context.Context, id int) error {
 	if s.isNoteExists(ctx, id) {
-		return entity.ErrNoteNotExists
+		return s.repo.DeleteById(ctx, id)
 	}
 
-	return s.repo.DeleteById(ctx, id)
+	return entity.ErrNoteNotExists
 }
 
 func (s *Service) DeleteNotes(ctx context.Context) error {
@@ -82,7 +82,7 @@ func (s *Service) isNoteExists(ctx context.Context, data interface{}) bool {
 		_, err = s.repo.GetByTitle(ctx, data.(string))
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
 		return false
 	}
 

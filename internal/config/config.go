@@ -107,6 +107,8 @@ func Get() *Config {
 			log.Fatal("error: get env for db")
 		}
 
+		log.Println(config)
+
 	})
 	return config
 }
