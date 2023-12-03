@@ -39,7 +39,7 @@ func Run() {
 
 	handler := transport.NewHandler(service)
 
-	server := server.New(handler, &cfg.HTTP)
+	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()
 

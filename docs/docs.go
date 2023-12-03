@@ -16,62 +16,6 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/v1/note": {
-            "get": {
-                "description": "Get notes",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "note"
-                ],
-                "summary": "Get notes",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "id",
-                        "name": "id",
-                        "in": "path"
-                    },
-                    {
-                        "description": "search params",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/transport.getNotesRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/transport.createNoteResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/transport.errorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/transport.errorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/transport.errorResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "create note",
                 "consumes": [
@@ -81,7 +25,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "note"
+                    "notes"
                 ],
                 "summary": "Create note",
                 "parameters": [
@@ -99,7 +43,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/transport.createNoteResponse"
+                            "$ref": "#/definitions/transport.successCUDResponse"
                         }
                     },
                     "400": {
@@ -126,16 +70,13 @@ const docTemplate = `{
         "/api/v1/note/{id}": {
             "get": {
                 "description": "Get note by id",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "note"
+                    "notes"
                 ],
-                "summary": "Get note",
+                "summary": "Get note by id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -149,7 +90,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/transport.createNoteResponse"
+                            "$ref": "#/definitions/transport.getNoteResponse"
                         }
                     },
                     "400": {
@@ -158,8 +99,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/transport.errorResponse"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/transport.errorResponse"
                         }
@@ -174,14 +115,11 @@ const docTemplate = `{
             },
             "delete": {
                 "description": "Delete note by id",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "note"
+                    "notes"
                 ],
                 "summary": "Delete note",
                 "parameters": [
@@ -194,20 +132,14 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/transport.createNoteResponse"
+                            "$ref": "#/definitions/transport.successCUDResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/transport.errorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/transport.errorResponse"
                         }
@@ -229,7 +161,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "note"
+                    "notes"
                 ],
                 "summary": "Update note",
                 "parameters": [
@@ -241,7 +173,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "params for update",
+                        "description": "updating params",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -251,10 +183,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "202": {
+                        "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/transport.createNoteResponse"
+                            "$ref": "#/definitions/transport.successCUDResponse"
                         }
                     },
                     "400": {
@@ -263,8 +195,107 @@ const docTemplate = `{
                             "$ref": "#/definitions/transport.errorResponse"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/transport.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notes": {
+            "get": {
+                "description": "Get all notes",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notes"
+                ],
+                "summary": "Get all notes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/transport.getNotesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/transport.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "notes"
+                ],
+                "summary": "Delete notes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/transport.successCUDResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/transport.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notes/{page}": {
+            "post": {
+                "description": "Get notes with filter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notes"
+                ],
+                "summary": "Get notes with filter",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id",
+                        "name": "page",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "searching params",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/transport.getNotesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/transport.getNotesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/transport.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/transport.errorResponse"
                         }
@@ -280,6 +311,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "entity.Note": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "transport.createNoteInput": {
             "type": "object",
             "required": [
@@ -304,19 +355,19 @@ const docTemplate = `{
                 }
             }
         },
-        "transport.createNoteResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
         "transport.errorResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "transport.getNoteResponse": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "$ref": "#/definitions/entity.Note"
                 }
             }
         },
@@ -337,6 +388,25 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "transport.getNotesResponse": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.Note"
+                    }
+                }
+            }
+        },
+        "transport.successCUDResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }

@@ -1,283 +1,203 @@
 package transport
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-const (
-	dateFormat = "2006-01-02"
-)
-
-type createNoteInput struct {
-	Title       string `json:"title" binding:"required,min=1,max=80"`
-	Description string `json:"description,omitempty"`
-	Date        string `json:"date,omitempty" binding:"min=9,max=10"`
-	Status      string `json:"status,omitempty"`
-}
-
-func (i createNoteInput) Validate() error {
-	if i.Date != "" {
-		_, err := time.Parse(dateFormat, i.Date)
-		if err != nil {
-			return err
-		}
-	}
-
-	if i.Title == "" {
-		return entity.ErrInvalidInput
-	}
-	return nil
-}
-
 // @Summary Create note
 // @Description create note
-// @Tags note
+// @Tags notes
 // @Accept json
 // @Produce json
 // @Param input body createNoteInput true "note info"
-// @Success 201 {object} createNoteResponse
+// @Success 201 {object} successCUDResponse
 // @Failure 400 {object} errorResponse
 // @Failure 409 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note [post]
 func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background() // change go r.Context()
-
 	var input createNoteInput
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+	if err := input.Set(r); err != nil {
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidInput.Error()})
 		return
 	}
 
-	if err := input.Validate(); err != nil {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
-		return
-	}
-
-	note := entity.Note{
+	err := h.service.CreateNote(r.Context(), entity.Note{
 		Title:       input.Title,
 		Description: input.Description,
+		Date:        input.DateFormatted,
 		Status:      input.Status,
-	}
+	})
 
-	if input.Date != "" {
-		note.Date, _ = time.Parse(dateFormat, input.Date)
-	}
-
-	id, err := h.service.CreateNote(ctx, note)
 	if err != nil {
 		if errors.Is(err, entity.ErrNoteExists) {
-			newErrorResponse(w, r, http.StatusConflict, err.Error())
+			renderJSON(w, r, http.StatusConflict, errorResponse{err.Error()})
 		} else {
-			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
 		return
 	}
 
-	newResponse(w, r, http.StatusCreated, createNoteResponse{ID: id})
+	renderJSON(w, r, http.StatusCreated, successCUDResponse{"Note created successfully"})
 }
 
 // @Summary Get note by id
 // @Description Get note by id
-// @Tags note
-// @Accept json
+// @Tags notes
 // @Produce json
 // @Param id path int true "id"
-// @Success 201 {object} createNoteResponse
+// @Success 201 {object} getNoteResponse
 // @Failure 400 {object} errorResponse
-// @Failure 409 {object} errorResponse
+// @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [get]
 func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	if id == 0 {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidId.Error())
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidId.Error()})
 		return
 	}
 
-	note, err := h.service.GetById(ctx, id)
+	note, err := h.service.GetById(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, entity.ErrNoteNotExits) {
-			newErrorResponse(w, r, http.StatusNotFound, entity.ErrNoteNotExits.Error())
+			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteNotExits.Error()})
 		} else {
-			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
 		return
 	}
 
-	newResponse(w, r, http.StatusOK, getNoteResponse{Note: note})
+	renderJSON(w, r, http.StatusOK, getNoteResponse{Note: note})
 }
 
-// @Summary Get all notes 
+// @Summary Get all notes
 // @Description Get all notes
-// @Tags note
-// @Accept json
+// @Tags notes
 // @Produce json
-// @Param id path int false "id"
-// @Param input body getNotesRequest true "search params"
-// @Success 201 {object} getNotesRequest
-// @Failure 400 {object} errorResponse
-// @Failure 409 {object} errorResponse
+// @Success 200 {object} getNotesResponse
 // @Failure 500 {object} errorResponse
-// @Router /api/v1/get_all_extended [post]
+// @Router /api/v1/notes [get]
 func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
-	notes, err := h.service.GetNotes(context.Background())
+	notes, err := h.service.GetNotes(r.Context())
 	if err != nil {
-		newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}
 
-	newResponse(w, r, http.StatusOK, getNotesResponse{Notes: notes})
-}
-
-type getNotesRequest struct {
-	Page          int       `json:"-"`
-	Status        string    `json:"status,omitempty"`
-	Date          string    `json:"date,omitempty"`
-	DateFormatted time.Time `json:"-"`
-	Limit         int       `json:"limit" binding:"required"`
-	Offset        int       `json:"offset" binding:"required"`
-}
-
-func (n *getNotesRequest) Set(r *http.Request) error {
-	var err error
-	n.Page, _ = strconv.Atoi(mux.Vars(r)["page"])
-	if n.Page == 0 {
-		return entity.ErrInvalidPage
-	}
-
-	err = json.NewDecoder(r.Body).Decode(n)
-	if err != nil {
-		return entity.ErrInvalidInput
-	}
-
-	if n.Limit <= 0 || n.Offset < 0 {
-		return entity.ErrInvalidInput
-	}
-
-	if n.Date != "" {
-		n.DateFormatted, err = time.Parse(dateFormat, n.Date)
-		if err != nil {
-			return entity.ErrInvalidDate
-		}
-	}
-	return nil
+	renderJSON(w, r, http.StatusOK, getNotesResponse{Notes: notes})
 }
 
 // @Summary Get notes with filter
 // @Description Get notes with filter
-// @Tags note
+// @Tags notes
 // @Accept json
 // @Produce json
-// @Param id path int false "id"
-// @Param input body getNotesRequest true "search params"
-// @Success 201 {object} notesRequest
+// @Param page path int true "id"
+// @Param input body getNotesRequest true "searching params"
+// @Success 200 {object} getNotesResponse
 // @Failure 400 {object} errorResponse
-// @Failure 409 {object} errorResponse
+// @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /api/v1/get_all_extended [post]
+// @Router /api/v1/notes/{page} [post]
 func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request) {
 	var input getNotesRequest
-
 	if err := input.Set(r); err != nil {
-		newErrorResponse(w, r, http.StatusBadRequest, err.Error())
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{err.Error()})
 		return
 	}
 
-	notes, err := h.service.GetNotesExtended(context.Background(), input.Limit, (input.Page-1)*input.Offset, input.Status, input.DateFormatted)
+	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Offset, input.Status, input.DateFormatted)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidStatus) {
-			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidStatus.Error())
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidStatus.Error()})
 		} else if errors.Is(err, entity.ErrNoteExists) {
-			newErrorResponse(w, r, http.StatusNotFound, entity.ErrNoteExists.Error())
+			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteExists.Error()})
 		} else {
-			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
 		return
 	}
 
-	newResponse(w, r, http.StatusOK, getNotesResponse{Notes: notes})
-}
-
-type updateNoteInput struct {
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Status      string `json:"status,omitempty"`
+	renderJSON(w, r, http.StatusOK, getNotesResponse{Notes: notes})
 }
 
 // @Summary Update note
 // @Description update note by id
-// @Tags note
+// @Tags notes
 // @Accept json
 // @Produce json
 // @Param id path int true "id"
-// @Param input body updateNoteInput true "params for update"
-// @Success 201 {object} successResponse
+// @Param input body updateNoteInput true "updating params"
+// @Success 202 {object} successCUDResponse
 // @Failure 400 {object} errorResponse
-// @Failure 409 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [patch]
 func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	if id == 0 {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidId.Error())
-		return
-	}
-
 	var input updateNoteInput
-	err := json.NewDecoder(r.Body).Decode(&input)
-	if err != nil || (input.Title == "" && input.Description == "" && input.Status == "") {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+	var err error
+	if err = input.Set(r); err != nil {
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidInput.Error()})
 		return
 	}
 
-	err = h.service.UpdateNote(ctx, id, input.Title, input.Description, input.Status)
+	err = h.service.UpdateNote(r.Context(), input.ID, input.Title, input.Description, input.Status)
 	if err != nil {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidInput.Error())
+		if errors.Is(err, entity.ErrNoteNotExits) {
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteNotExits.Error()})
+		} else {
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		}
+		return
 	}
 
-	newResponse(w, r, http.StatusAccepted, putResponse{Message: "Successfully update"})
+	renderJSON(w, r, http.StatusAccepted, successCUDResponse{Message: "Successfully update"})
 }
 
 // @Summary Delete note
 // @Description Delete note by id
-// @Tags note
-// @Accept json
+// @Tags notes
 // @Produce json
 // @Param id path int true "id"
-// @Success 201 {object} successResponse
+// @Success 200 {object} successCUDResponse
 // @Failure 400 {object} errorResponse
-// @Failure 409 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [delete]
 func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	if id == 0 {
-		newErrorResponse(w, r, http.StatusBadRequest, entity.ErrInvalidId.Error())
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidId.Error()})
 		return
 	}
 
-	err := h.service.DeleteById(ctx, id)
-	if err != nil {
+	if err := h.service.DeleteById(r.Context(), id); err != nil {
 		if errors.Is(err, entity.ErrNoteExists) {
-			newErrorResponse(w, r, http.StatusBadRequest, entity.ErrNoteExists.Error())
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteExists.Error()})
 			return
 		} else {
-			newErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 			return
 		}
 	}
 
-	newResponse(w, r, http.StatusOK, putResponse{Message: "Succesfully delete note"})
+	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "Note deleted succesfully"})
+}
+
+// @Summary Delete notes
+// @Tags notes
+// @Success 200 {object} successCUDResponse
+// @Failure 500 {object} errorResponse
+// @Router /api/v1/notes [delete]
+func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
+	if err := h.service.DeleteNotes(r.Context()); err != nil {
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		return
+	}
+
+	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "Notes deleted succesfully"})
 }

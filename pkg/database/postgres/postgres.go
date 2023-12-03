@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -13,6 +14,10 @@ const (
 
 type Config interface {
 	GetDSN() string
+	GetMaxOpenConns() int
+	GetMaxIdleConns() int
+	GetConnMaxIdleTime() time.Duration
+	GetConnMaxLifetime() time.Duration
 }
 
 func New(cfg Config) (*sql.DB, error) {
@@ -20,6 +25,11 @@ func New(cfg Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "opening db")
 	}
+
+	db.SetMaxOpenConns(cfg.GetMaxOpenConns())
+	db.SetMaxIdleConns(cfg.GetMaxIdleConns())
+	db.SetConnMaxIdleTime(cfg.GetConnMaxIdleTime())
+	db.SetConnMaxLifetime(cfg.GetConnMaxLifetime())
 
 	if err := db.Ping(); err != nil {
 		return nil, errors.Wrap(err, "ping DB")

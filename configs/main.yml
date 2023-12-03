@@ -2,6 +2,8 @@ http:
   host: 127.0.0.1
   port: 8080
   shutdownTimeout: 5s
+  readTimeout: 5s
+  writeTimeout: 5s
 
 db:
   user: "postgres"
@@ -10,3 +12,7 @@ db:
   port: "5432"
   name: "postgres"
   sslmode: "disable"
+  maxOpenConns: 5
+  maxIdleConns: 5
+  connMaxIdleTime: 5m
+  connMaxLifetime: 5m

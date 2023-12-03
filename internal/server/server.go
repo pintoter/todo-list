@@ -12,18 +12,22 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-type HTTPConfig interface {
+type Config interface {
 	GetAddr() string
+	GetReadTimeout() time.Duration
+	GetWriteTimeout() time.Duration
 	GetShutdownTimeout() time.Duration
 }
 
-func New(handler http.Handler, cfg HTTPConfig) *Server {
+func New(cfg Config, handler http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
-			Addr:    cfg.GetAddr(),
-			Handler: handler,
+			Addr:         cfg.GetAddr(),
+			Handler:      handler,
+			ReadTimeout:  cfg.GetReadTimeout(),
+			WriteTimeout: cfg.GetWriteTimeout(),
 		},
-		notify:          make(chan error),
+		notify:          make(chan error, 1),
 		shutdownTimeout: cfg.GetShutdownTimeout(),
 	}
 }

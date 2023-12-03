@@ -1,4 +1,17 @@
 definitions:
+  entity.Note:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+    type: object
   transport.createNoteInput:
     properties:
       date:
@@ -16,15 +29,15 @@ definitions:
     required:
     - title
     type: object
-  transport.createNoteResponse:
-    properties:
-      id:
-        type: integer
-    type: object
   transport.errorResponse:
     properties:
       error:
         type: string
+    type: object
+  transport.getNoteResponse:
+    properties:
+      note:
+        $ref: '#/definitions/entity.Note'
     type: object
   transport.getNotesRequest:
     properties:
@@ -40,6 +53,18 @@ definitions:
     - limit
     - offset
     type: object
+  transport.getNotesResponse:
+    properties:
+      notes:
+        items:
+          $ref: '#/definitions/entity.Note'
+        type: array
+    type: object
+  transport.successCUDResponse:
+    properties:
+      message:
+        type: string
+    type: object
   transport.updateNoteInput:
     properties:
       description:
@@ -53,43 +78,6 @@ info:
   contact: {}
 paths:
   /api/v1/note:
-    get:
-      consumes:
-      - application/json
-      description: Get notes
-      parameters:
-      - description: id
-        in: path
-        name: id
-        type: integer
-      - description: search params
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/transport.getNotesRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/transport.createNoteResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/transport.errorResponse'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/transport.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/transport.errorResponse'
-      summary: Get notes
-      tags:
-      - note
     post:
       consumes:
       - application/json
@@ -107,7 +95,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/transport.createNoteResponse'
+            $ref: '#/definitions/transport.successCUDResponse'
         "400":
           description: Bad Request
           schema:
@@ -122,11 +110,9 @@ paths:
             $ref: '#/definitions/transport.errorResponse'
       summary: Create note
       tags:
-      - note
+      - notes
   /api/v1/note/{id}:
     delete:
-      consumes:
-      - application/json
       description: Delete note by id
       parameters:
       - description: id
@@ -137,16 +123,12 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/transport.createNoteResponse'
+            $ref: '#/definitions/transport.successCUDResponse'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/transport.errorResponse'
-        "409":
-          description: Conflict
           schema:
             $ref: '#/definitions/transport.errorResponse'
         "500":
@@ -155,10 +137,8 @@ paths:
             $ref: '#/definitions/transport.errorResponse'
       summary: Delete note
       tags:
-      - note
+      - notes
     get:
-      consumes:
-      - application/json
       description: Get note by id
       parameters:
       - description: id
@@ -172,22 +152,22 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/transport.createNoteResponse'
+            $ref: '#/definitions/transport.getNoteResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/transport.errorResponse'
-        "409":
-          description: Conflict
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/transport.errorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/transport.errorResponse'
-      summary: Get note
+      summary: Get note by id
       tags:
-      - note
+      - notes
     patch:
       consumes:
       - application/json
@@ -198,7 +178,7 @@ paths:
         name: id
         required: true
         type: integer
-      - description: params for update
+      - description: updating params
         in: body
         name: input
         required: true
@@ -207,16 +187,12 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "202":
+          description: Accepted
           schema:
-            $ref: '#/definitions/transport.createNoteResponse'
+            $ref: '#/definitions/transport.successCUDResponse'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/transport.errorResponse'
-        "409":
-          description: Conflict
           schema:
             $ref: '#/definitions/transport.errorResponse'
         "500":
@@ -225,5 +201,74 @@ paths:
             $ref: '#/definitions/transport.errorResponse'
       summary: Update note
       tags:
-      - note
+      - notes
+  /api/v1/notes:
+    delete:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/transport.successCUDResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+      summary: Delete notes
+      tags:
+      - notes
+    get:
+      description: Get all notes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/transport.getNotesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+      summary: Get all notes
+      tags:
+      - notes
+  /api/v1/notes/{page}:
+    post:
+      consumes:
+      - application/json
+      description: Get notes with filter
+      parameters:
+      - description: id
+        in: path
+        name: page
+        required: true
+        type: integer
+      - description: searching params
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/transport.getNotesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/transport.getNotesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+      summary: Get notes with filter
+      tags:
+      - notes
 swagger: "2.0"

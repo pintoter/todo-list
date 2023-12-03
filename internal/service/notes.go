@@ -9,12 +9,13 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func (s *Service) CreateNote(ctx context.Context, note entity.Note) (int, error) {
+func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 	if s.isNoteExists(ctx, note.Title) {
-		return 0, entity.ErrNoteExists
+		return entity.ErrNoteExists
 	}
 
-	return s.repo.Create(ctx, note)
+	_, err := s.repo.Create(ctx, note)
+	return err
 }
 
 func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
@@ -31,10 +32,6 @@ func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
 }
 
 func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	if status != "" && status != entity.StatusDone && status != entity.StatusNotDone {
-		return nil, entity.ErrInvalidStatus
-	}
-
 	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
 	if err != nil {
 		return nil, err
