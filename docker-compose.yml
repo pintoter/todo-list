@@ -21,7 +21,7 @@ services:
     image: postgres:latest
     hostname: postgres
     ports:
-      - 5432:5432
+      - "${LOCAL_DB_PORT}:${DB_PORT}"
     environment:
       - DB_PASSWORD = ${DB_PASSWORD}
     volumes:
