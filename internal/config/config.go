@@ -47,10 +47,10 @@ type DB struct {
 	Port            string
 	Name            string
 	Sslmode         string
-	MaxOpenConns    int           `ignored:"true"`
-	MaxIdleConns    int           `ignored:"true"`
-	ConnMaxIdleTime time.Duration `ignored:"true"`
-	ConnMaxLifetime time.Duration `ignored:"true"`
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxIdleTime time.Duration
+	ConnMaxLifetime time.Duration
 }
 
 func (db *DB) GetDSN() string {
@@ -106,9 +106,6 @@ func Get() *Config {
 		if err != nil {
 			log.Fatal("error: get env for db")
 		}
-
-		log.Println(config)
-
 	})
 	return config
 }

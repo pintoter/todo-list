@@ -90,6 +90,7 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 	builder := sq.Select("id", "title", "description", "date", "status").
 		From(notes).
+		OrderBy("id ASC").
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -118,6 +119,7 @@ func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 func getSelectQuery(limit, offset int, status string, date time.Time) (string, []interface{}, error) {
 	builder := sq.Select("id", "title", "description", "date", "status").
 		From(notes).
+		OrderBy("id ASC").
 		PlaceholderFormat(sq.Dollar)
 
 	if status != "" {

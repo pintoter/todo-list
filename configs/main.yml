@@ -6,12 +6,6 @@ http:
   writeTimeout: 5s
 
 db:
-  user: "postgres"
-  password: "postgres"
-  host: "localhost"
-  port: "5432"
-  name: "postgres"
-  sslmode: "disable"
   maxOpenConns: 5
   maxIdleConns: 5
   connMaxIdleTime: 5m

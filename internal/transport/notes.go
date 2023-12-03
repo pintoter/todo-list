@@ -43,7 +43,7 @@ func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderJSON(w, r, http.StatusCreated, successCUDResponse{"Note created successfully"})
+	renderJSON(w, r, http.StatusCreated, successCUDResponse{"note created successfully"})
 }
 
 // @Summary Get note by id
@@ -154,13 +154,15 @@ func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrNoteNotExists) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteNotExists.Error()})
+		} else if errors.Is(err, entity.ErrNoteExists) {
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteExists.Error() + " with title: " + input.Title})
 		} else {
 			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
 		return
 	}
 
-	renderJSON(w, r, http.StatusAccepted, successCUDResponse{Message: "Note updated successfully"})
+	renderJSON(w, r, http.StatusAccepted, successCUDResponse{Message: "note updated successfully"})
 }
 
 // @Summary Delete note
@@ -189,7 +191,7 @@ func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "Note deleted succesfully"})
+	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "note deleted succesfully"})
 }
 
 // @Summary Delete notes
@@ -199,9 +201,13 @@ func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/notes [delete]
 func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.DeleteNotes(r.Context()); err != nil {
-		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		if errors.Is(err, entity.ErrNotesNotExist) {
+			renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "notes already deleted"})
+		} else {
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		}
 		return
 	}
 
-	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "Notes deleted succesfully"})
+	renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "notes deleted succesfully"})
 }
