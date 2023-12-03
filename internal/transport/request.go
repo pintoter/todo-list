@@ -70,8 +70,7 @@ type getNotesRequest struct {
 	Status        string    `json:"status,omitempty"`
 	Date          string    `json:"date,omitempty"`
 	DateFormatted time.Time `json:"-"`
-	Limit         int       `json:"limit" binding:"required"`
-	Offset        int       `json:"offset" binding:"required"`
+	Limit         int       `json:"limit,omitempty"`
 }
 
 func (n *getNotesRequest) Set(r *http.Request) error {
@@ -86,8 +85,12 @@ func (n *getNotesRequest) Set(r *http.Request) error {
 		return entity.ErrInvalidInput
 	}
 
-	if n.Limit <= 0 || n.Offset < 0 {
+	if n.Limit < 0 {
 		return entity.ErrInvalidInput
+	}
+
+	if n.Limit == 0 {
+		n.Limit = 5
 	}
 
 	if n.Date != "" {

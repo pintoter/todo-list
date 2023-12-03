@@ -21,20 +21,33 @@ func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
 	note, err := s.repo.GetById(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return entity.Note{}, entity.ErrNoteNotExits
+		return entity.Note{}, entity.ErrNoteNotExists
 	}
 
 	return note, nil
 }
 
 func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	return s.repo.GetNotes(ctx)
+	notes, err := s.repo.GetNotes(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entity.ErrNotesNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return notes, nil
 }
 
 func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
 	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entity.ErrNotesNotExist
+		} else {
+			return nil, err
+		}
 	}
 
 	return notes, nil
@@ -42,7 +55,7 @@ func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, statu
 
 func (s *Service) UpdateNote(ctx context.Context, id int, title, description, status string) error {
 	if s.isNoteExists(ctx, id) {
-		return entity.ErrNoteNotExits
+		return entity.ErrNoteNotExists
 	}
 
 	return s.repo.UpdateNote(ctx, id, title, description, status)
@@ -50,7 +63,7 @@ func (s *Service) UpdateNote(ctx context.Context, id int, title, description, st
 
 func (s *Service) DeleteById(ctx context.Context, id int) error {
 	if s.isNoteExists(ctx, id) {
-		return entity.ErrNoteNotExits
+		return entity.ErrNoteNotExists
 	}
 
 	return s.repo.DeleteById(ctx, id)

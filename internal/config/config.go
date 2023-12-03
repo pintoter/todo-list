@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/spf13/viper"
 )
 
@@ -78,16 +80,14 @@ var config = new(Config)
 var once sync.Once
 
 func init() {
-	/*
-		err := godotenv.Load(envFile)
-		if err != nil {
-			log.Fatal("loading env file")
-		}
-	*/
+	err := godotenv.Load(envFile)
+	if err != nil {
+		log.Fatal("loading env file")
+	}
 
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("main")
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("reading config err")
 	}
@@ -102,12 +102,11 @@ func Get() *Config {
 			log.Fatal("reading config")
 		}
 
-		/*
-			err = envconfig.Process("db", &config.DB)
-			if err != nil {
-				log.Fatal("error: get env for db")
-			}
-		*/
+		err = envconfig.Process("db", &config.DB)
+		if err != nil {
+			log.Fatal("error: get env for db")
+		}
+
 	})
 	return config
 }

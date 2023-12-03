@@ -45,13 +45,8 @@ definitions:
         type: string
       limit:
         type: integer
-      offset:
-        type: integer
       status:
         type: string
-    required:
-    - limit
-    - offset
     type: object
   transport.getNotesResponse:
     properties:
@@ -238,7 +233,7 @@ paths:
       - application/json
       description: Get notes with filter
       parameters:
-      - description: id
+      - description: page
         in: path
         name: page
         required: true

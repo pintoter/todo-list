@@ -266,7 +266,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "id",
+                        "description": "page",
                         "name": "page",
                         "in": "path",
                         "required": true
@@ -373,18 +373,11 @@ const docTemplate = `{
         },
         "transport.getNotesRequest": {
             "type": "object",
-            "required": [
-                "limit",
-                "offset"
-            ],
             "properties": {
                 "date": {
                     "type": "string"
                 },
                 "limit": {
-                    "type": "integer"
-                },
-                "offset": {
                     "type": "integer"
                 },
                 "status": {

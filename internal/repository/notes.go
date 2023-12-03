@@ -128,9 +128,7 @@ func getSelectQuery(limit, offset int, status string, date time.Time) (string, [
 		builder = builder.Where(sq.Eq{"date": date})
 	}
 
-	if limit != 0 {
-		builder = builder.Limit(uint64(limit)).Offset(uint64(offset))
-	}
+	builder = builder.Limit(uint64(limit)).Offset(uint64(offset))
 
 	return builder.ToSql()
 }

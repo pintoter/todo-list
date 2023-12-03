@@ -1,5 +1,5 @@
 http:
-  host: 127.0.0.1
+  host: todo-app
   port: 8080
   shutdownTimeout: 5s
   readTimeout: 5s

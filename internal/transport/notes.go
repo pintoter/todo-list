@@ -65,8 +65,8 @@ func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
 
 	note, err := h.service.GetById(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, entity.ErrNoteNotExits) {
-			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteNotExits.Error()})
+		if errors.Is(err, entity.ErrNoteNotExists) {
+			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteNotExists.Error()})
 		} else {
 			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
@@ -86,7 +86,11 @@ func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 	notes, err := h.service.GetNotes(r.Context())
 	if err != nil {
-		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		if errors.Is(err, entity.ErrNotesNotExist) {
+			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNotesNotExist.Error()})
+		} else {
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
+		}
 		return
 	}
 
@@ -98,7 +102,7 @@ func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags notes
 // @Accept json
 // @Produce json
-// @Param page path int true "id"
+// @Param page path int true "page"
 // @Param input body getNotesRequest true "searching params"
 // @Success 200 {object} getNotesResponse
 // @Failure 400 {object} errorResponse
@@ -112,12 +116,12 @@ func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Offset, input.Status, input.DateFormatted)
+	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Limit, input.Status, input.DateFormatted)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidStatus) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidStatus.Error()})
-		} else if errors.Is(err, entity.ErrNoteExists) {
-			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteExists.Error()})
+		} else if errors.Is(err, entity.ErrNotesNotExist) {
+			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNotesNotExist.Error()})
 		} else {
 			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
@@ -148,15 +152,15 @@ func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.UpdateNote(r.Context(), input.ID, input.Title, input.Description, input.Status)
 	if err != nil {
-		if errors.Is(err, entity.ErrNoteNotExits) {
-			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteNotExits.Error()})
+		if errors.Is(err, entity.ErrNoteNotExists) {
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteNotExists.Error()})
 		} else {
 			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}
 		return
 	}
 
-	renderJSON(w, r, http.StatusAccepted, successCUDResponse{Message: "Successfully update"})
+	renderJSON(w, r, http.StatusAccepted, successCUDResponse{Message: "Note updated successfully"})
 }
 
 // @Summary Delete note
