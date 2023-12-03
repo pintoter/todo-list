@@ -9,6 +9,8 @@ import (
 	"github.com/pintoter/todo-list/internal/repository"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type INotesRepository interface {
 	Create(ctx context.Context, note entity.Note) (int, error)
 	GetByTitle(ctx context.Context, title string) (entity.Note, error)
@@ -25,11 +27,11 @@ type IRepository interface {
 }
 
 type Service struct {
-	repo IRepository
+	IRepository
 }
 
 func New(db *sql.DB) *Service {
 	return &Service{
-		repo: repository.New(db),
+		IRepository: repository.New(db),
 	}
 }

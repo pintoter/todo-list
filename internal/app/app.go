@@ -34,6 +34,7 @@ func Run() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("DB connected")
 
 	service := service.New(db)
 
@@ -42,6 +43,7 @@ func Run() {
 	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()
+	log.Println("Starting server")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)

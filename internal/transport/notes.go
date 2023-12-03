@@ -201,11 +201,7 @@ func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/notes [delete]
 func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.DeleteNotes(r.Context()); err != nil {
-		if errors.Is(err, entity.ErrNotesNotExist) {
-			renderJSON(w, r, http.StatusOK, successCUDResponse{Message: "notes already deleted"})
-		} else {
-			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
-		}
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}
 

@@ -14,12 +14,12 @@ func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 		return entity.ErrNoteExists
 	}
 
-	_, err := s.repo.Create(ctx, note)
+	_, err := s.IRepository.Create(ctx, note)
 	return err
 }
 
 func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
-	note, err := s.repo.GetById(ctx, id)
+	note, err := s.IRepository.GetById(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return entity.Note{}, entity.ErrNoteNotExists
 	}
@@ -28,7 +28,7 @@ func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
 }
 
 func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	notes, err := s.repo.GetNotes(ctx)
+	notes, err := s.IRepository.GetNotes(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entity.ErrNotesNotExist
@@ -41,7 +41,7 @@ func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
 }
 
 func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
+	notes, err := s.IRepository.GetNotesExtended(ctx, limit, offset, status, date)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entity.ErrNotesNotExist
@@ -62,25 +62,21 @@ func (s *Service) UpdateNote(ctx context.Context, id int, title, description, st
 		return entity.ErrNoteExists
 	}
 
-	return s.repo.UpdateNote(ctx, id, title, description, status)
+	return s.IRepository.UpdateNote(ctx, id, title, description, status)
 }
 
 func (s *Service) DeleteById(ctx context.Context, id int) error {
 	if s.isNoteExists(ctx, id) {
-		return s.repo.DeleteById(ctx, id)
+		return s.IRepository.DeleteById(ctx, id)
 	}
 
 	return entity.ErrNoteNotExists
 }
 
 func (s *Service) DeleteNotes(ctx context.Context) error {
-	err := s.repo.DeleteNotes(ctx)
+	err := s.IRepository.DeleteNotes(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return entity.ErrNotesNotExist
-		} else {
-			return err
-		}
+		return err
 	}
 
 	return nil
@@ -90,9 +86,9 @@ func (s *Service) isNoteExists(ctx context.Context, data interface{}) bool {
 	var err error
 	switch data.(type) {
 	case int:
-		_, err = s.repo.GetById(ctx, data.(int))
+		_, err = s.IRepository.GetById(ctx, data.(int))
 	case string:
-		_, err = s.repo.GetByTitle(ctx, data.(string))
+		_, err = s.IRepository.GetByTitle(ctx, data.(string))
 	}
 
 	if err != nil {

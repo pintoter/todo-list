@@ -40,7 +40,7 @@ func (h *Handler) InitRoutes() {
 		v1.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods(http.MethodGet)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods(http.MethodDelete)
 		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodGet)
-		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodDelete)
+		v1.HandleFunc("/notes", h.deleteNotesHandler).Methods(http.MethodDelete)
 		v1.HandleFunc("/notes/{page:[0-9]+}", h.getNotesExtendedHandler).Methods(http.MethodPost)
 	}
 }

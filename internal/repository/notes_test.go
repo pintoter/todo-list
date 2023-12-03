@@ -334,7 +334,7 @@ func TestGetNotes(t *testing.T) {
 					AddRow(0, notes[2].Title, notes[2].Description, notes[2].Date, notes[2].Status).
 					AddRow(0, notes[3].Title, notes[3].Description, notes[3].Date, notes[3].Status)
 
-				expectedQuery := "SELECT id, title, description, date, status FROM notes"
+				expectedQuery := "SELECT id, title, description, date, status FROM notes ORDER BY id ASC"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(rows)
 			},
 			wantNotes: []entity.Note{notes[0], notes[1], notes[2], notes[3]},
@@ -427,7 +427,7 @@ func TestGetNotesExtended(t *testing.T) {
 					AddRow(notes[2].ID, notes[2].Title, notes[2].Description, notes[2].Date, notes[2].Status).
 					AddRow(notes[3].ID, notes[3].Title, notes[3].Description, notes[3].Date, notes[3].Status)
 
-				expectedQuery := "SELECT id, title, description, date, status FROM notes LIMIT 5 OFFSET 5"
+				expectedQuery := "SELECT id, title, description, date, status FROM notes ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(rows)
 			},
 			wantNotes: []entity.Note{notes[0], notes[1], notes[2], notes[3]},
@@ -445,7 +445,7 @@ func TestGetNotesExtended(t *testing.T) {
 					AddRow(notes[1].ID, notes[1].Title, notes[1].Description, notes[1].Date, notes[1].Status).
 					AddRow(notes[3].ID, notes[3].Title, notes[3].Description, notes[3].Date, notes[3].Status)
 
-				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 LIMIT 5 OFFSET 5"
+				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.status).WillReturnRows(rows)
 			},
 			wantNotes: []entity.Note{notes[1], notes[3]},
@@ -464,7 +464,7 @@ func TestGetNotesExtended(t *testing.T) {
 					AddRow(notes[1].ID, notes[1].Title, notes[1].Description, dateFormatted, notes[1].Status).
 					AddRow(notes[3].ID, notes[3].Title, notes[3].Description, dateFormatted, notes[3].Status)
 
-				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 AND date = $2 LIMIT 5 OFFSET 5"
+				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 AND date = $2 ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.status, args.date).WillReturnRows(rows)
 			},
 			wantNotes: []entity.Note{
