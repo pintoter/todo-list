@@ -86,11 +86,7 @@ func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 	notes, err := h.service.GetNotes(r.Context())
 	if err != nil {
-		if errors.Is(err, entity.ErrNotesNotExist) {
-			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNotesNotExist.Error()})
-		} else {
-			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
-		}
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}
 
@@ -120,8 +116,6 @@ func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidStatus) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidStatus.Error()})
-		} else if errors.Is(err, entity.ErrNotesNotExist) {
-			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNotesNotExist.Error()})
 		} else {
 			renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		}

@@ -38,7 +38,7 @@ test:
 	make --silent test-cover
 
 .PHONY: test-cover
-test-cover:	test
+test-cover:
 	go tool cover -html cover.out -o cover.html
 	open cover.html
 
@@ -49,3 +49,4 @@ swag:
 .PHONY: clean
 clean:
 	rm -rf ./.bin
+	rm cover.out cover.html

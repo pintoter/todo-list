@@ -36,8 +36,8 @@ func (h *Handler) InitRoutes() {
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()
 	{
 		v1.HandleFunc("/note", h.createNoteHandler).Methods(http.MethodPost)
-		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNoteHandler).Methods(http.MethodPatch)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods(http.MethodGet)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNoteHandler).Methods(http.MethodPatch)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods(http.MethodDelete)
 		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodGet)
 		v1.HandleFunc("/notes", h.deleteNotesHandler).Methods(http.MethodDelete)
