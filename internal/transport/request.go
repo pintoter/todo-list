@@ -33,11 +33,21 @@ func (n *createNoteInput) Set(r *http.Request) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		n.DateFormatted = time.Now()
+		if err != nil {
+			return err
+		}
 	}
 
 	if n.Title == "" {
 		return entity.ErrInvalidInput
 	}
+
+	if n.Status == "" {
+		n.Status = entity.StatusNotDone
+	}
+
 	return nil
 }
 
