@@ -34,7 +34,7 @@ git clone https://github.com/pintoter/todo-list.git
 ---
 
 ## Getting started
-1. **Setting up environment variables (create a .env file in the project root) and set your own parameters like example:**
+1. **Create .env file with filename ".env" in the project root and setting up environment your own variables:**
 ```dotenv
 # Database
 export DB_USER = "user"
@@ -65,10 +65,10 @@ make
 #### Example of correct input parameters:
 ```shell
 "title": "any, unique",
-"description": "any, any",
+"description": "any",
 "status": "done" / "not_done",
-"date": "2023-01-29",
-"limit": "any, non negative"
+"date": "YYYY-MM-DD, e.g.: 2023-01-29",
+"limit": "any, not negative"
 ```
 #### 1. Create note
 * Request example:
@@ -110,7 +110,7 @@ curl -X 'GET' \
 }
 ```
 
-#### 3. Update note
+#### 3. Update note by ID
 * Request example:
 ```shell
 curl -X 'PATCH' \
@@ -199,7 +199,6 @@ curl -X 'DELETE' \
   "message": "notes deleted succesfully"
 }
 ```
-> **Hint:** if the deleting was successful, the server will return code 204 (NO CONTENT).
 
 #### 7. Get all notes with pagination, status and date
 * Request example:
@@ -265,4 +264,8 @@ make migrate-down
 4. **Stop all running containers**
 ```shell
 make stop
+```
+5. **Run linter**
+```shell
+make lint
 ```

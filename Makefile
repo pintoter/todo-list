@@ -46,6 +46,10 @@ test-cover:
 swag:
 	swag init -g ./cmd/app/main.go
 
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+
 .PHONY: clean
 clean:
 	rm -rf ./.bin

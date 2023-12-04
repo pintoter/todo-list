@@ -25,11 +25,11 @@ type errorResponse struct {
 }
 
 func renderJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
-	log.Printf("[%s] %s - Response: Status code: [%d]", r.Method, r.URL.Path, code)
+	log.Printf("[Response] [%s] %s - Status code: [%d]", r.Method, r.URL.Path, code)
 
 	resp, _ := json.MarshalIndent(data, "", "    ")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(resp)
+	_, _ = w.Write(resp)
 }

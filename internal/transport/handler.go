@@ -46,6 +46,6 @@ func (h *Handler) InitRoutes() {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[%s] %s", r.Method, r.URL)
+	log.Printf("[Request] [%s] %s - [FROM]: %s", r.Method, r.URL, r.RemoteAddr)
 	h.router.ServeHTTP(w, r)
 }

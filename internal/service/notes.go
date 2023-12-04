@@ -80,16 +80,12 @@ func (s *Service) DeleteNotes(ctx context.Context) error {
 
 func (s *Service) isNoteExists(ctx context.Context, data interface{}) bool {
 	var err error
-	switch data.(type) {
+	switch value := data.(type) {
 	case int:
-		_, err = s.IRepository.GetById(ctx, data.(int))
+		_, err = s.IRepository.GetById(ctx, value)
 	case string:
-		_, err = s.IRepository.GetByTitle(ctx, data.(string))
+		_, err = s.IRepository.GetByTitle(ctx, value)
 	}
 
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }

@@ -51,7 +51,7 @@ func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags notes
 // @Produce json
 // @Param id path int true "id"
-// @Success 201 {object} getNoteResponse
+// @Success 200 {object} getNoteResponse
 // @Failure 400 {object} errorResponse
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
@@ -102,7 +102,6 @@ func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 // @Param input body getNotesRequest true "searching params"
 // @Success 200 {object} getNotesResponse
 // @Failure 400 {object} errorResponse
-// @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes/{page} [post]
 func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request) {
