@@ -3,6 +3,7 @@ package transport
 import (
 	"encoding/json"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 const (
 	dateFormat = "2006-01-02"
 )
+
+/* ------------- NOTES ------------- */
 
 type createNoteInput struct {
 	Title         string    `json:"title" binding:"required,min=1,max=80"`
@@ -112,6 +115,39 @@ func (n *getNotesRequest) Set(r *http.Request) error {
 
 	if n.Status != "" && n.Status != entity.StatusDone && n.Status != entity.StatusNotDone {
 		return entity.ErrInvalidStatus
+	}
+
+	return nil
+}
+
+/* ------------- USERS ------------- */
+
+type signUpInput struct {
+	Login    string `json:"login" binding:"required,min=2,max=64"`
+	Email    string `json:"email" binding:"required,min=6,max=64"`
+	Password string `json:"password" binding:"required,min=8,max=64"`
+}
+
+func (u *signUpInput) Set(r *http.Request) error {
+	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
+		return entity.ErrInvalidInput
+	}
+
+	if _, err := mail.ParseAddress(u.Email); err != nil {
+		return entity.ErrInvalidEmail
+	}
+
+	return nil
+}
+
+type signInInput struct {
+	Login    string `json:"login" binding:"required,min=2,max=64"`
+	Password string `json:"password" binding:"required,min=8,max=64"`
+}
+
+func (u *signInInput) Set(r *http.Request) error {
+	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
+		return entity.ErrInvalidInput
 	}
 
 	return nil

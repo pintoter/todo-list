@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
@@ -19,12 +18,20 @@ type Notes interface {
 	DeleteNotes(ctx context.Context) error
 }
 
-type Repository struct {
-	Notes
+type Users interface {
+	SignIn()
+	SignUp()
+	Logout()
 }
 
-func New(db *sql.DB) *Repository {
+type Repository struct {
+	Notes
+	Users
+}
+
+func New(repo Repository) *Repository {
 	return &Repository{
-		Notes: NewNotes(db),
+		Notes: repo.Notes,
+		Users: repo.Users,
 	}
 }

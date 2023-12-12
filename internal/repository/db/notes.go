@@ -9,21 +9,7 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-const (
-	notes = "notes"
-)
-
-type NotesRepo struct {
-	db *sql.DB
-}
-
-func NewNotes(db *sql.DB) *NotesRepo {
-	return &NotesRepo{
-		db: db,
-	}
-}
-
-func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
+func (n *DBRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -52,7 +38,16 @@ func (n *NotesRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	return noteId, tx.Commit()
 }
 
-func (n *NotesRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
+func (n *DBRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
+	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return entity.Note{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	builderSelect := sq.Select("title", "description", "date", "status").From(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builderSelect.ToSql()
@@ -62,15 +57,24 @@ func (n *NotesRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
 
 	var note entity.Note
 
-	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
+	err = tx.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
 	}
 
-	return note, nil
+	return note, tx.Commit()
 }
 
-func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
+func (n *DBRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
+	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return entity.Note{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	builderSelect := sq.Select("title", "description", "date", "status").From(notes).Where(sq.Eq{"title": title}).PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builderSelect.ToSql()
@@ -79,15 +83,24 @@ func (n *NotesRepo) GetByTitle(ctx context.Context, title string) (entity.Note, 
 	}
 
 	var note entity.Note
-	err = n.db.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
+	err = tx.QueryRowContext(ctx, query, args...).Scan(&note.Title, &note.Description, &note.Date, &note.Status)
 	if err != nil {
 		return entity.Note{}, err
 	}
 
-	return note, err
+	return note, tx.Commit()
 }
 
-func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
+func (n *DBRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
+	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	builder := sq.Select("id", "title", "description", "date", "status").
 		From(notes).
 		OrderBy("id ASC").
@@ -99,7 +112,7 @@ func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 	}
 
 	var notes []entity.Note
-	rows, err := n.db.QueryContext(ctx, query, args...)
+	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +126,7 @@ func (n *NotesRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
 		notes = append(notes, note)
 	}
 
-	return notes, err
+	return notes, tx.Commit()
 }
 
 func getSelectQuery(limit, offset int, status string, date time.Time) (string, []interface{}, error) {
@@ -135,14 +148,23 @@ func getSelectQuery(limit, offset int, status string, date time.Time) (string, [
 	return builder.ToSql()
 }
 
-func (n *NotesRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
+func (n *DBRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
+	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	query, args, err := getSelectQuery(limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}
 
 	var notes []entity.Note
-	rows, err := n.db.QueryContext(ctx, query, args...)
+	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +178,7 @@ func (n *NotesRepo) GetNotesExtended(ctx context.Context, limit, offset int, sta
 		notes = append(notes, note)
 	}
 
-	return notes, err
+	return notes, tx.Commit()
 }
 
 func getUpdateBuilder(id int, title, description, status string) (string, []interface{}, error) {
@@ -177,7 +199,7 @@ func getUpdateBuilder(id int, title, description, status string) (string, []inte
 	return builder.ToSql()
 }
 
-func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
+func (n *DBRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -200,7 +222,7 @@ func (n *NotesRepo) UpdateNote(ctx context.Context, id int, title, description, 
 	return tx.Commit()
 }
 
-func (n *NotesRepo) DeleteById(ctx context.Context, id int) error {
+func (n *DBRepo) DeleteById(ctx context.Context, id int) error {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -225,7 +247,7 @@ func (n *NotesRepo) DeleteById(ctx context.Context, id int) error {
 	return tx.Commit()
 }
 
-func (n *NotesRepo) DeleteNotes(ctx context.Context) error {
+func (n *DBRepo) DeleteNotes(ctx context.Context) error {
 	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,

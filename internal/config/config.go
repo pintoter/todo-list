@@ -64,16 +64,41 @@ func (db *DB) GetMaxOpenConns() int {
 func (db *DB) GetMaxIdleConns() int {
 	return db.MaxIdleConns
 }
+
 func (db *DB) GetConnMaxIdleTime() time.Duration {
 	return db.ConnMaxIdleTime
 }
+
 func (db *DB) GetConnMaxLifetime() time.Duration {
 	return db.ConnMaxLifetime
+}
+
+type Auth struct {
+	Salt            string
+	Secret          string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+}
+
+func (a *Auth) GetSalt() string {
+	return a.Salt
+}
+
+func (a *Auth) GetSecret() string {
+	return a.Secret
+}
+
+func (a *Auth) GetAccessTokenTTL() time.Duration {
+	return a.AccessTokenTTL
+}
+func (a *Auth) GetRefreshTokenTTL() time.Duration {
+	return a.RefreshTokenTTL
 }
 
 type Config struct {
 	HTTP HTTP
 	DB   DB
+	Auth Auth
 }
 
 var config = new(Config)
@@ -105,6 +130,11 @@ func Get() *Config {
 		err = envconfig.Process("db", &config.DB)
 		if err != nil {
 			log.Fatal("error: get env for db")
+		}
+
+		err = envconfig.Process("auth", &config.Auth)
+		if err != nil {
+			log.Fatal("error: get env for auth")
 		}
 	})
 	return config

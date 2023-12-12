@@ -33,15 +33,22 @@ func (h *Handler) InitRoutes() {
 		httpSwagger.DomID("swagger-ui"),
 	)).Methods(http.MethodGet)
 
+	auth := h.router.PathPrefix("/auth").Subrouter()
+	{
+		auth.HandleFunc("/sign-up", h.signUp).Methods(http.MethodPost)
+		auth.HandleFunc("/sign-in", h.signIn).Methods(http.MethodPost)
+		
+	}
+
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()
 	{
-		v1.HandleFunc("/note", h.createNoteHandler).Methods(http.MethodPost)
-		v1.HandleFunc("/note/{id:[0-9]+}", h.getNoteHandler).Methods(http.MethodGet)
-		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNoteHandler).Methods(http.MethodPatch)
-		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNoteHandler).Methods(http.MethodDelete)
-		v1.HandleFunc("/notes", h.getNotesHandler).Methods(http.MethodGet)
-		v1.HandleFunc("/notes", h.deleteNotesHandler).Methods(http.MethodDelete)
-		v1.HandleFunc("/notes/{page:[0-9]+}", h.getNotesExtendedHandler).Methods(http.MethodPost)
+		v1.HandleFunc("/note", h.createNote).Methods(http.MethodPost)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.getNote).Methods(http.MethodGet)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNote).Methods(http.MethodPatch)
+		v1.HandleFunc("/note/{id:[0-9]+}", h.deleteNote).Methods(http.MethodDelete)
+		v1.HandleFunc("/notes", h.getNotes).Methods(http.MethodGet)
+		v1.HandleFunc("/notes", h.deleteNotes).Methods(http.MethodDelete)
+		v1.HandleFunc("/notes/{page:[0-9]+}", h.getNotesExtended).Methods(http.MethodPost)
 	}
 }
 

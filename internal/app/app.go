@@ -9,10 +9,12 @@ import (
 	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/config"
 	migrations "github.com/pintoter/todo-list/internal/database"
+	"github.com/pintoter/todo-list/internal/repository"
 	"github.com/pintoter/todo-list/internal/server"
 	"github.com/pintoter/todo-list/internal/service"
 	"github.com/pintoter/todo-list/internal/transport"
 	"github.com/pintoter/todo-list/pkg/database/postgres"
+	"github.com/pintoter/todo-list/pkg/hash"
 )
 
 // @title           			todo-list
@@ -39,10 +41,13 @@ func Run() {
 	}
 	log.Println("DB connected")
 
-	service := service.New(db)
+	hasher := hash.New()
 
+	dbrepo := repository.NewDBRepo(db)
+
+	repo := repository.New()
+	service := service.New(repo)
 	handler := transport.NewHandler(service)
-
 	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()

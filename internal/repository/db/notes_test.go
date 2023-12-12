@@ -20,7 +20,7 @@ func TestNote_Create(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		note entity.Note
@@ -142,7 +142,7 @@ func TestNote_GetById(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		id int
@@ -170,11 +170,15 @@ func TestNote_GetById(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"title", "description", "date", "status"}).
 					AddRow(notes[0].Title, notes[0].Description, notes[0].Date, notes[0].Status)
 
 				expectedQuery := "SELECT title, description, date, status FROM notes WHERE id = $1"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.id).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			args:     args{id: id},
 			wantNote: notes[0],
@@ -182,10 +186,14 @@ func TestNote_GetById(t *testing.T) {
 		{
 			name: "Failed_NotFound",
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"title", "description", "date", "status"})
 
 				expectedQuery := "SELECT title, description, date, status FROM notes WHERE id = $1"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.id).WillReturnError(errors.New("failed test")).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			args:     args{id: id},
 			wantNote: entity.Note{},
@@ -215,7 +223,7 @@ func TestNote_GetByTitle(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		title string
@@ -243,11 +251,15 @@ func TestNote_GetByTitle(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"title", "description", "date", "status"}).
 					AddRow(notes[0].Title, notes[0].Description, notes[0].Date, notes[0].Status)
 
 				expectedQuery := "SELECT title, description, date, status FROM notes WHERE title = $1"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.title).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			args:     args{title: title},
 			wantNote: notes[0],
@@ -288,7 +300,7 @@ func TestGetNotes(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type mockBehavior func()
 
@@ -328,6 +340,8 @@ func TestGetNotes(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func() {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"id", "title", "description", "date", "status"}).
 					AddRow(0, notes[0].Title, notes[0].Description, notes[0].Date, notes[0].Status).
 					AddRow(0, notes[1].Title, notes[1].Description, notes[1].Date, notes[1].Status).
@@ -336,6 +350,8 @@ func TestGetNotes(t *testing.T) {
 
 				expectedQuery := "SELECT id, title, description, date, status FROM notes ORDER BY id ASC"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			wantNotes: []entity.Note{notes[0], notes[1], notes[2], notes[3]},
 		},
@@ -363,7 +379,7 @@ func TestGetNotesExtended(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		limit  int
@@ -421,6 +437,8 @@ func TestGetNotesExtended(t *testing.T) {
 				offset: 5,
 			},
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"id", "title", "description", "date", "status"}).
 					AddRow(notes[0].ID, notes[0].Title, notes[0].Description, notes[0].Date, notes[0].Status).
 					AddRow(notes[1].ID, notes[1].Title, notes[1].Description, notes[1].Date, notes[1].Status).
@@ -429,6 +447,8 @@ func TestGetNotesExtended(t *testing.T) {
 
 				expectedQuery := "SELECT id, title, description, date, status FROM notes ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			wantNotes: []entity.Note{notes[0], notes[1], notes[2], notes[3]},
 			wantErr:   false,
@@ -441,12 +461,16 @@ func TestGetNotesExtended(t *testing.T) {
 				status: entity.StatusDone,
 			},
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"id", "title", "description", "date", "status"}).
 					AddRow(notes[1].ID, notes[1].Title, notes[1].Description, notes[1].Date, notes[1].Status).
 					AddRow(notes[3].ID, notes[3].Title, notes[3].Description, notes[3].Date, notes[3].Status)
 
 				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.status).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			wantNotes: []entity.Note{notes[1], notes[3]},
 			wantErr:   false,
@@ -460,12 +484,16 @@ func TestGetNotesExtended(t *testing.T) {
 				status: entity.StatusDone,
 			},
 			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
 				rows := sqlmock.NewRows([]string{"id", "title", "description", "date", "status"}).
 					AddRow(notes[1].ID, notes[1].Title, notes[1].Description, dateFormatted, notes[1].Status).
 					AddRow(notes[3].ID, notes[3].Title, notes[3].Description, dateFormatted, notes[3].Status)
 
 				expectedQuery := "SELECT id, title, description, date, status FROM notes WHERE status = $1 AND date = $2 ORDER BY id ASC LIMIT 5 OFFSET 5"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(args.status, args.date).WillReturnRows(rows)
+
+				mock.ExpectCommit()
 			},
 			wantNotes: []entity.Note{
 				{
@@ -509,7 +537,7 @@ func TestUpdateNote(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		id          int
@@ -589,7 +617,7 @@ func TestDeleteById(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type args struct {
 		id int
@@ -660,7 +688,7 @@ func TestDeleteNotes(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := New(db)
+	r := NewDBRepo(db)
 
 	type mockBehavior func()
 

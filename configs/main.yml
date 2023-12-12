@@ -10,3 +10,7 @@ db:
   maxIdleConns: 5
   connMaxIdleTime: 5m
   connMaxLifetime: 5m
+
+auth:
+  accessTokenTTL: 15m
+  refreshTokenTTL: 720h

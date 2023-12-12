@@ -24,6 +24,10 @@ type errorResponse struct {
 	Err string `json:"error"`
 }
 
+type tokenResponse struct {
+	Token string `json:"token"`
+}
+
 func renderJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
 	log.Printf("[Response] [%s] %s - Status code: [%d]", r.Method, r.URL.Path, code)
 

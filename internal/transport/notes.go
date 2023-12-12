@@ -20,7 +20,7 @@ import (
 // @Failure 409 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note [post]
-func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) createNote(w http.ResponseWriter, r *http.Request) {
 	var input createNoteInput
 	if err := input.Set(r); err != nil {
 		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidInput.Error()})
@@ -56,7 +56,7 @@ func (h *Handler) createNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [get]
-func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getNote(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	if id == 0 {
 		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidId.Error()})
@@ -83,7 +83,7 @@ func (h *Handler) getNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} getNotesResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes [get]
-func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getNotes(w http.ResponseWriter, r *http.Request) {
 	notes, err := h.service.GetNotes(r.Context())
 	if err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
@@ -104,7 +104,7 @@ func (h *Handler) getNotesHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes/{page} [post]
-func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getNotesExtended(w http.ResponseWriter, r *http.Request) {
 	var input getNotesRequest
 	if err := input.Set(r); err != nil {
 		renderJSON(w, r, http.StatusBadRequest, errorResponse{err.Error()})
@@ -135,7 +135,7 @@ func (h *Handler) getNotesExtendedHandler(w http.ResponseWriter, r *http.Request
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [patch]
-func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) updateNote(w http.ResponseWriter, r *http.Request) {
 	var input updateNoteInput
 	var err error
 	if err = input.Set(r); err != nil {
@@ -167,7 +167,7 @@ func (h *Handler) updateNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/note/{id} [delete]
-func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) deleteNote(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	if id == 0 {
 		renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidId.Error()})
@@ -192,7 +192,7 @@ func (h *Handler) deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} successCUDResponse
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes [delete]
-func (h *Handler) deleteNotesHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) deleteNotes(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.DeleteNotes(r.Context()); err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return

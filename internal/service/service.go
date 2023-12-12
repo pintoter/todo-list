@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/pintoter/todo-list/internal/entity"
-	"github.com/pintoter/todo-list/internal/repository"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
@@ -22,16 +20,23 @@ type INotesRepository interface {
 	DeleteNotes(ctx context.Context) error
 }
 
+type IUsersRepository interface {
+	SignUp(ctx context.Context, user entity.User) (int, error)
+	SignIn(ctx context.Context, login, password string) (entity.Token, error)
+	RefreshToken(ctx context.Context, refreshToken string) (entity.Token, error)
+}
+
 type IRepository interface {
 	INotesRepository
+	IUsersRepository
 }
 
 type Service struct {
 	IRepository
 }
 
-func New(db *sql.DB) *Service {
+func New(cfg Config, repo IRepository) *Service {
 	return &Service{
-		IRepository: repository.New(db),
+		IRepository: repo,
 	}
 }
