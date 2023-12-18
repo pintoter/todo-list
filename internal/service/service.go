@@ -9,6 +9,11 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
+type Config interface {
+	GetAccessTokenTTL() time.Duration
+	GetRefreshTokenTTL() time.Duration
+}
+
 type INotesRepository interface {
 	Create(ctx context.Context, note entity.Note) (int, error)
 	GetByTitle(ctx context.Context, title string) (entity.Note, error)
@@ -31,12 +36,30 @@ type IRepository interface {
 	IUsersRepository
 }
 
-type Service struct {
-	IRepository
+type PasswordHasher interface {
+	Hash(password string) (string, error)
 }
 
-func New(cfg Config, repo IRepository) *Service {
+type TokenManager interface {
+	NewJWT(userId int, ttl time.Duration) (string, error)
+	NewRefreshToken() (string, error)
+	ParseToken(accessToken string) (int, error)
+}
+
+type Service struct {
+	repo            IRepository
+	hasher          PasswordHasher
+	tokenManager    TokenManager
+	accessTokenTTL  time.Duration
+	refreshTokenTTL time.Duration
+}
+
+func New(cfg Config, repo IRepository, hasher PasswordHasher, tokenManager TokenManager) *Service {
 	return &Service{
-		IRepository: repo,
+		repo:            repo,
+		hasher:          hasher,
+		tokenManager:    tokenManager,
+		accessTokenTTL:  cfg.GetAccessTokenTTL(),
+		refreshTokenTTL: cfg.GetAccessTokenTTL(),
 	}
 }

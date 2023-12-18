@@ -12,4 +12,5 @@ var (
 	ErrInvalidInput  = errors.New("invalid input parameters")
 	ErrInvalidPage   = errors.New("invalid page")
 	ErrInvalidStatus = errors.New("invalid status")
+	ErrUserExists    = errors.New("user with input parameters already exists")
 )

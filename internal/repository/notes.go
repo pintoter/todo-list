@@ -9,8 +9,8 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func (n *DBRepo) Create(ctx context.Context, note entity.Note) (int, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) Create(ctx context.Context, note entity.Note) (int, error) {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -38,8 +38,8 @@ func (n *DBRepo) Create(ctx context.Context, note entity.Note) (int, error) {
 	return noteId, tx.Commit()
 }
 
-func (n *DBRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -65,8 +65,8 @@ func (n *DBRepo) GetById(ctx context.Context, id int) (entity.Note, error) {
 	return note, tx.Commit()
 }
 
-func (n *DBRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) GetByTitle(ctx context.Context, title string) (entity.Note, error) {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -91,8 +91,8 @@ func (n *DBRepo) GetByTitle(ctx context.Context, title string) (entity.Note, err
 	return note, tx.Commit()
 }
 
-func (n *DBRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) GetNotes(ctx context.Context) ([]entity.Note, error) {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -148,8 +148,8 @@ func getSelectQuery(limit, offset int, status string, date time.Time) (string, [
 	return builder.ToSql()
 }
 
-func (n *DBRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -199,8 +199,8 @@ func getUpdateBuilder(id int, title, description, status string) (string, []inte
 	return builder.ToSql()
 }
 
-func (n *DBRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -222,8 +222,8 @@ func (n *DBRepo) UpdateNote(ctx context.Context, id int, title, description, sta
 	return tx.Commit()
 }
 
-func (n *DBRepo) DeleteById(ctx context.Context, id int) error {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) DeleteById(ctx context.Context, id int) error {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
@@ -247,8 +247,8 @@ func (n *DBRepo) DeleteById(ctx context.Context, id int) error {
 	return tx.Commit()
 }
 
-func (n *DBRepo) DeleteNotes(ctx context.Context) error {
-	tx, err := n.db.BeginTx(ctx, &sql.TxOptions{
+func (r *DBRepo) DeleteNotes(ctx context.Context) error {
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})

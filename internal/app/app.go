@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/pintoter/todo-list/internal/repository"
 	"log"
 	"os"
 	"os/signal"
@@ -9,7 +10,6 @@ import (
 	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/config"
 	migrations "github.com/pintoter/todo-list/internal/database"
-	"github.com/pintoter/todo-list/internal/repository"
 	"github.com/pintoter/todo-list/internal/server"
 	"github.com/pintoter/todo-list/internal/service"
 	"github.com/pintoter/todo-list/internal/transport"
@@ -41,13 +41,14 @@ func Run() {
 	}
 	log.Println("DB connected")
 
-	hasher := hash.New()
+	hasher := hash.New(&cfg.Auth)
 
 	dbrepo := repository.NewDBRepo(db)
 
-	repo := repository.New()
-	service := service.New(repo)
+	service := service.New(&cfg.Auth, dbrepo)
+	
 	handler := transport.NewHandler(service)
+
 	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()

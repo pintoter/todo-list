@@ -57,11 +57,11 @@ func (db *DB) GetDSN() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", db.User, db.Password, db.Host, db.Port, db.Name, db.Sslmode)
 }
 
-func (db *DB) GetMaxOpenConns() int {
+func (db *DB) GetMaxOpenCons() int {
 	return db.MaxOpenConns
 }
 
-func (db *DB) GetMaxIdleConns() int {
+func (db *DB) GetMaxIdleCons() int {
 	return db.MaxIdleConns
 }
 

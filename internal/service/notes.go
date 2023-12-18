@@ -14,12 +14,12 @@ func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 		return entity.ErrNoteExists
 	}
 
-	_, err := s.IRepository.Create(ctx, note)
+	_, err := s.repo.Create(ctx, note)
 	return err
 }
 
 func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
-	note, err := s.IRepository.GetById(ctx, id)
+	note, err := s.repo.GetById(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Note{}, entity.ErrNoteNotExists
@@ -32,7 +32,7 @@ func (s *Service) GetById(ctx context.Context, id int) (entity.Note, error) {
 }
 
 func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	notes, err := s.IRepository.GetNotes(ctx)
+	notes, err := s.repo.GetNotes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
 }
 
 func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	notes, err := s.IRepository.GetNotesExtended(ctx, limit, offset, status, date)
+	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
 	if err != nil {
 		return nil, err
 	}
@@ -58,19 +58,19 @@ func (s *Service) UpdateNote(ctx context.Context, id int, title, description, st
 		return entity.ErrNoteExists
 	}
 
-	return s.IRepository.UpdateNote(ctx, id, title, description, status)
+	return s.repo.UpdateNote(ctx, id, title, description, status)
 }
 
 func (s *Service) DeleteById(ctx context.Context, id int) error {
 	if s.isNoteExists(ctx, id) {
-		return s.IRepository.DeleteById(ctx, id)
+		return s.repo.DeleteById(ctx, id)
 	}
 
 	return entity.ErrNoteNotExists
 }
 
 func (s *Service) DeleteNotes(ctx context.Context) error {
-	err := s.IRepository.DeleteNotes(ctx)
+	err := s.repo.DeleteNotes(ctx)
 	if err != nil {
 		return err
 	}
@@ -82,9 +82,9 @@ func (s *Service) isNoteExists(ctx context.Context, data interface{}) bool {
 	var err error
 	switch value := data.(type) {
 	case int:
-		_, err = s.IRepository.GetById(ctx, value)
+		_, err = s.repo.GetById(ctx, value)
 	case string:
-		_, err = s.IRepository.GetByTitle(ctx, value)
+		_, err = s.repo.GetByTitle(ctx, value)
 	}
 
 	return err == nil
