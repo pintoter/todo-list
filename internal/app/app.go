@@ -1,11 +1,13 @@
 package app
 
 import (
-	"github.com/pintoter/todo-list/internal/repository"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/pintoter/todo-list/internal/repository"
+	"github.com/pintoter/todo-list/internal/repository/dbrepo"
 
 	_ "github.com/pintoter/todo-list/docs"
 	"github.com/pintoter/todo-list/internal/config"
@@ -42,11 +44,18 @@ func Run() {
 	log.Println("DB connected")
 
 	hasher := hash.New(&cfg.Auth)
+	dbrepo := dbrepo.New(db)
+	// add token manager
+	// add deps struct for:
+	/* {
+		cfg: &cfg.Auth
+		repo: dbrepo
+		hasher: hasher
+		tokenManager: tokenManager
+	}
+	*/
+	service := service.New(cfg.Auth, dbrepo, hasher, )
 
-	dbrepo := repository.NewDBRepo(db)
-
-	service := service.New(&cfg.Auth, dbrepo)
-	
 	handler := transport.NewHandler(service)
 
 	server := server.New(&cfg.HTTP, handler)

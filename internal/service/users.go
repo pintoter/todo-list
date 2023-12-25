@@ -5,12 +5,21 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func (s *Service) SignUp(ctx context.Context, user entity.User) (int, error) {
-	if s.isLoginExists(ctx, user.Login) || s.isEmailExists(ctx, user.Email) {
+func (s *Service) SignUp(ctx context.Context, email, login, password string) (int, error) {
+	if s.isLoginExists(ctx, login) || s.isEmailExists(ctx, email) {
 		return 0, entity.ErrUserExists
 	}
 
-	id, err := s.repo.SignUp(ctx, user)
+	hashedPassword, err := s.hasher.Hash(password)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := s.repo.CreateUser(ctx, entity.User{
+		Email:    email,
+		Login:    login,
+		Password: hashedPassword,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -29,11 +38,13 @@ func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (entity
 }
 
 func (s *Service) isLoginExists(ctx context.Context, login string) bool {
+	_, err := s.repo.GetByLogin(ctx, login)
 
-	return false
+	return err == nil
 }
 
 func (s *Service) isEmailExists(ctx context.Context, email string) bool {
+	_, err := s.repo.GetByEmail(ctx, email)
 
-	return false
+	return err == nil
 }

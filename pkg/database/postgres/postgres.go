@@ -14,8 +14,8 @@ const (
 
 type Config interface {
 	GetDSN() string
-	GetMaxOpenConns() int
-	GetMaxIdleConns() int
+	GetMaxOpenCons() int
+	GetMaxIdleCons() int
 	GetConnMaxIdleTime() time.Duration
 	GetConnMaxLifetime() time.Duration
 }
@@ -26,8 +26,8 @@ func New(cfg Config) (*sql.DB, error) {
 		return nil, errors.Wrap(err, "opening db")
 	}
 
-	db.SetMaxOpenConns(cfg.GetMaxOpenConns())
-	db.SetMaxIdleConns(cfg.GetMaxIdleConns())
+	db.SetMaxOpenConns(cfg.GetMaxOpenCons())
+	db.SetMaxIdleConns(cfg.GetMaxIdleCons())
 	db.SetConnMaxIdleTime(cfg.GetConnMaxIdleTime())
 	db.SetConnMaxLifetime(cfg.GetConnMaxLifetime())
 

@@ -14,7 +14,7 @@ func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 		return entity.ErrNoteExists
 	}
 
-	_, err := s.repo.Create(ctx, note)
+	_, err := s.repo.CreateNote(ctx, note)
 	return err
 }
 

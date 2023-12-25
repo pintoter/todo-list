@@ -1,4 +1,4 @@
-package repository
+package dbrepo
 
 import (
 	"context"
@@ -13,128 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNote_Create(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	r := NewDBRepo(db)
-
-	type args struct {
-		note entity.Note
-	}
-
-	type mockBehavior func(args args)
-
-	tests := []struct {
-		name         string
-		mockBehavior mockBehavior
-		args         args
-		id           int
-		wantErr      bool
-	}{
-		{
-			name: "Success",
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
-				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-				mock.ExpectCommit()
-			},
-			args: args{
-				note: entity.Note{
-					Title:       "Test title",
-					Description: "Test describstion",
-					Date:        time.Now().Round(time.Second),
-					Status:      entity.StatusDone,
-				},
-			},
-			id: 1,
-		},
-		{
-			name: "Success_WithEmptyDateAndDescription",
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
-				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-				mock.ExpectCommit()
-			},
-			args: args{
-				note: entity.Note{
-					Title:  "Test title",
-					Status: entity.StatusDone,
-				},
-			},
-			id: 1,
-		},
-		{
-			name: "Failed_EmptyTitle",
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
-				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("empty title"))
-
-				mock.ExpectRollback()
-			},
-			args: args{
-				note: entity.Note{
-					Title:       "",
-					Description: "Test describstion",
-					Date:        time.Now().Round(time.Second),
-					Status:      entity.StatusDone,
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "Failed_InvalidStatus",
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
-				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("invalid status"))
-
-				mock.ExpectRollback()
-			},
-			args: args{
-				note: entity.Note{
-					Title:       "Title",
-					Description: "Test describstion",
-					Date:        time.Now().Round(time.Second),
-					Status:      "not dont",
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(tt.args)
-
-			got, err := r.Create(context.Background(), tt.args.note)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.id, got)
-			}
-			assert.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
-}
-
 func TestNote_GetById(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -142,7 +20,7 @@ func TestNote_GetById(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := NewDBRepo(db)
+	r := New(db)
 
 	type args struct {
 		id int
@@ -205,7 +83,7 @@ func TestNote_GetById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockBehavior(tt.args)
 
-			gotNote, err := r.GetById(context.Background(), tt.args.id)
+			gotNote, err := r.GetNoteById(context.Background(), tt.args.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -223,7 +101,7 @@ func TestNote_GetByTitle(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := NewDBRepo(db)
+	r := New(db)
 
 	type args struct {
 		title string
@@ -282,7 +160,7 @@ func TestNote_GetByTitle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockBehavior(tt.args)
 
-			gotNote, err := r.GetByTitle(context.Background(), tt.args.title)
+			gotNote, err := r.GetNoteByTitle(context.Background(), tt.args.title)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -300,7 +178,7 @@ func TestGetNotes(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := NewDBRepo(db)
+	r := New(db)
 
 	type mockBehavior func()
 
@@ -379,7 +257,7 @@ func TestGetNotesExtended(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := NewDBRepo(db)
+	r := New(db)
 
 	type args struct {
 		limit  int
@@ -525,215 +403,6 @@ func TestGetNotesExtended(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantNotes, got)
-			}
-		})
-	}
-}
-
-func TestUpdateNote(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	r := NewDBRepo(db)
-
-	type args struct {
-		id          int
-		title       string
-		description string
-		status      string
-	}
-
-	type mockBehavior func(args args)
-
-	tests := []struct {
-		name         string
-		args         args
-		mockBehavior mockBehavior
-		wantErr      bool
-	}{
-		{
-			name: "Success",
-			args: args{
-				id:          1,
-				title:       "Test title NEW",
-				description: "Test description NEW",
-				status:      entity.StatusDone,
-			},
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedQuery := "UPDATE notes SET title = $1, description = $2, status = $3 WHERE id = $4"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WithArgs(args.title, args.description, args.status, args.id).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-
-				mock.ExpectCommit()
-			},
-			wantErr: false,
-		},
-		{
-			name: "Failed",
-			args: args{
-				id:          100,
-				title:       "Test title NEW",
-				description: "Test description NEW",
-				status:      entity.StatusDone,
-			},
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedQuery := "UPDATE notes SET title = $1, description = $2, status = $3 WHERE id = $4"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WithArgs(args.title, args.description, args.status, args.id).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-
-				mock.ExpectRollback()
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(tt.args)
-			err := r.UpdateNote(context.Background(), tt.args.id, tt.args.title, tt.args.description, tt.args.status)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestDeleteById(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	r := NewDBRepo(db)
-
-	type args struct {
-		id int
-	}
-
-	type mockBehavior func(args args)
-
-	tests := []struct {
-		name         string
-		args         args
-		mockBehavior mockBehavior
-		wantErr      bool
-	}{
-		{
-			name: "Success",
-			args: args{
-				id: 1,
-			},
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedQuery := "DELETE FROM notes WHERE id = $1"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WithArgs(args.id).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-
-				mock.ExpectCommit()
-			},
-			wantErr: false,
-		},
-		{
-			name: "Failed",
-			args: args{
-				id: 100,
-			},
-			mockBehavior: func(args args) {
-				mock.ExpectBegin()
-
-				expectedQuery := "DELETE FROM notes WHERE id = $1"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WithArgs(args.id).
-					WillReturnError(errors.New("new error"))
-
-				mock.ExpectRollback()
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(tt.args)
-			err := r.DeleteById(context.Background(), tt.args.id)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestDeleteNotes(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	r := NewDBRepo(db)
-
-	type mockBehavior func()
-
-	tests := []struct {
-		name         string
-		mockBehavior mockBehavior
-		wantErr      bool
-	}{
-		{
-			name: "Success",
-			mockBehavior: func() {
-				mock.ExpectBegin()
-
-				expectedQuery := "DELETE FROM notes"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WillReturnResult(sqlmock.NewResult(0, 5))
-
-				mock.ExpectCommit()
-			},
-			wantErr: false,
-		},
-		{
-			name: "Failed",
-			mockBehavior: func() {
-				mock.ExpectBegin()
-
-				expectedQuery := "DELETE FROM notes"
-				mock.ExpectExec(regexp.QuoteMeta(expectedQuery)).
-					WillReturnError(errors.New("new error"))
-
-				mock.ExpectRollback()
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior()
-			err := r.DeleteNotes(context.Background())
-
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
 			}
 		})
 	}
