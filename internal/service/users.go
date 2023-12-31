@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
@@ -38,13 +39,13 @@ func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (entity
 }
 
 func (s *Service) isLoginExists(ctx context.Context, login string) bool {
-	_, err := s.repo.GetByLogin(ctx, login)
+	_, err := s.repo.GetUserByLogin(ctx, login)
 
 	return err == nil
 }
 
 func (s *Service) isEmailExists(ctx context.Context, email string) bool {
-	_, err := s.repo.GetByEmail(ctx, email)
+	_, err := s.repo.GetUserByEmail(ctx, email)
 
 	return err == nil
 }

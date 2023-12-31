@@ -2,6 +2,7 @@ package dbrepo
 
 import (
 	"context"
+	"errors"
 	"log"
 	"regexp"
 	"testing"
@@ -31,7 +32,7 @@ func TestCreateUser(t *testing.T) {
 		name         string
 		mockBehavior mockBehavior
 		args         args
-		id           int
+		wantId       int
 		wantErr      bool
 	}{
 		{
@@ -51,10 +52,31 @@ func TestCreateUser(t *testing.T) {
 					Email:        "testy",
 					Login:        "test",
 					Password:     "hashedpw",
-					RegisteredAt: time.Now().Round(time.Second),
+					RegisteredAt: time.Time{},
 				},
 			},
-			id: 1,
+			wantId: 1,
+		},
+		{
+			name: "FailedWithoutLogin",
+			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
+				expectExec := "INSERT INTO users (email,login,password,register_at) VALUES ($1,$2,$3,$4) RETURNING id"
+				mock.ExpectQuery(regexp.QuoteMeta(expectExec)).
+					WithArgs(args.user.Email, args.user.Login, args.user.Password, args.user.RegisteredAt).
+					WillReturnError(errors.New("empty email"))
+
+				mock.ExpectRollback()
+			},
+			args: args{
+				user: entity.User{
+					Login:        "test",
+					Password:     "hashedpw",
+					RegisteredAt: time.Time{},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -67,8 +89,8 @@ func TestCreateUser(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.id, got)
 			}
+			assert.Equal(t, tt.wantId, got)
 			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}

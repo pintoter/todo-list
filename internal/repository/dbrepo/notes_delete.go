@@ -7,15 +7,15 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func getDeleteByIdQuery(id int) (string, []interface{}, error) {
+func getDeleteByIdQuery(id, userId int) (string, []interface{}, error) {
 	builder := sq.Delete(notes).
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"id": id, "user_id": userId}).
 		PlaceholderFormat(sq.Dollar)
 
 	return builder.ToSql()
 }
 
-func (r *DBRepo) DeleteNoteById(ctx context.Context, id int) error {
+func (r *DBRepo) DeleteNoteById(ctx context.Context, id, userId int) error {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -25,7 +25,7 @@ func (r *DBRepo) DeleteNoteById(ctx context.Context, id int) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query, args, err := getDeleteByIdQuery(id)
+	query, args, err := getDeleteByIdQuery(id, userId)
 	if err != nil {
 		return err
 	}
@@ -38,14 +38,15 @@ func (r *DBRepo) DeleteNoteById(ctx context.Context, id int) error {
 	return tx.Commit()
 }
 
-func getDeleteNotesQuery() (string, []interface{}, error) {
+func getDeleteNotesQuery(userId int) (string, []interface{}, error) {
 	builder := sq.Delete(notes).
+		Where(sq.Eq{"user_id": userId}).
 		PlaceholderFormat(sq.Dollar)
 
 	return builder.ToSql()
 }
 
-func (r *DBRepo) DeleteNotes(ctx context.Context) error {
+func (r *DBRepo) DeleteNotes(ctx context.Context, userId int) error {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -55,7 +56,7 @@ func (r *DBRepo) DeleteNotes(ctx context.Context) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query, args, err := getDeleteNotesQuery()
+	query, args, err := getDeleteNotesQuery(userId)
 	if err != nil {
 		return err
 	}

@@ -7,8 +7,10 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func getUpdateNoteBuilder(id int, title, description, status string) (string, []interface{}, error) {
-	builder := sq.Update(notes).Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar)
+func updateBuilder(id, userId int, title, description, status string) (string, []interface{}, error) {
+	builder := sq.Update(notes).
+		Where(sq.Eq{"id": id, "user_id": userId}).
+		PlaceholderFormat(sq.Dollar)
 
 	if title != "" {
 		builder = builder.Set("title", title)
@@ -25,7 +27,7 @@ func getUpdateNoteBuilder(id int, title, description, status string) (string, []
 	return builder.ToSql()
 }
 
-func (r *DBRepo) UpdateNote(ctx context.Context, id int, title, description, status string) error {
+func (r *DBRepo) UpdateNote(ctx context.Context, id, userId int, title, description, status string) error {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
@@ -35,7 +37,7 @@ func (r *DBRepo) UpdateNote(ctx context.Context, id int, title, description, sta
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query, args, err := getUpdateNoteBuilder(id, title, description, status)
+	query, args, err := updateBuilder(id, userId, title, description, status)
 	if err != nil {
 		return err
 	}

@@ -40,14 +40,15 @@ func TestNote_Create(t *testing.T) {
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
+				expectedExec := "INSERT INTO notes (user_id,title,description,date,status) VALUES ($1,$2,$3,$4,$5) RETURNING id"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+					WithArgs(args.note.UserId, args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 				mock.ExpectCommit()
 			},
 			args: args{
 				note: entity.Note{
+					UserId:      1,
 					Title:       "Test title",
 					Description: "Test describstion",
 					Date:        time.Now().Round(time.Second),
@@ -61,14 +62,15 @@ func TestNote_Create(t *testing.T) {
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
+				expectedExec := "INSERT INTO notes (user_id,title,description,date,status) VALUES ($1,$2,$3,$4,$5) RETURNING id"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+					WithArgs(args.note.UserId, args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 				mock.ExpectCommit()
 			},
 			args: args{
 				note: entity.Note{
+					UserId: 1,
 					Title:  "Test title",
 					Status: entity.StatusDone,
 				},
@@ -80,14 +82,15 @@ func TestNote_Create(t *testing.T) {
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
+				expectedExec := "INSERT INTO notes (user_id,title,description,date,status) VALUES ($1,$2,$3,$4,$5) RETURNING id"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("empty title"))
+					WithArgs(args.note.UserId, args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("empty title"))
 
 				mock.ExpectRollback()
 			},
 			args: args{
 				note: entity.Note{
+					UserId:      1,
 					Title:       "",
 					Description: "Test describstion",
 					Date:        time.Now().Round(time.Second),
@@ -97,13 +100,34 @@ func TestNote_Create(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Failed_EmptyUserId",
+			mockBehavior: func(args args) {
+				mock.ExpectBegin()
+
+				expectedExec := "INSERT INTO notes (user_id,title,description,date,status) VALUES ($1,$2,$3,$4,$5) RETURNING id"
+				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
+					WithArgs(args.note.UserId, args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("empty id"))
+
+				mock.ExpectRollback()
+			},
+			args: args{
+				note: entity.Note{
+					Title:       "Title",
+					Description: "Test describstion",
+					Date:        time.Now().Round(time.Second),
+					Status:      "not dont",
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Failed_InvalidStatus",
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectedExec := "INSERT INTO notes (title,description,date,status) VALUES ($1,$2,$3,$4) RETURNING id"
+				expectedExec := "INSERT INTO notes (user_id,title,description,date,status) VALUES ($1,$2,$3,$4,$5) RETURNING id"
 				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).
-					WithArgs(args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("invalid status"))
+					WithArgs(args.note.UserId, args.note.Title, args.note.Description, args.note.Date, args.note.Status).WillReturnError(errors.New("invalid status"))
 
 				mock.ExpectRollback()
 			},

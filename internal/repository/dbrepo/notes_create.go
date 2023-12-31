@@ -8,10 +8,10 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func getCreateQuery(note entity.Note) (string, []interface{}, error) {
+func createNoteBuilder(note entity.Note) (string, []interface{}, error) {
 	builder := sq.Insert(notes).
-		Columns("title", "description", "date", "status").
-		Values(note.Title, note.Description, note.Date, note.Status).
+		Columns("user_id", "title", "description", "date", "status").
+		Values(note.UserId, note.Title, note.Description, note.Date, note.Status).
 		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar)
 
@@ -28,7 +28,7 @@ func (r *DBRepo) CreateNote(ctx context.Context, note entity.Note) (int, error) 
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query, args, err := getCreateQuery(note)
+	query, args, err := createNoteBuilder(note)
 	if err != nil {
 		return 0, err
 	}

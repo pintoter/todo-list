@@ -3,16 +3,15 @@ package dbrepo
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func getCreateUserQuery(user entity.User) (string, []interface{}, error) {
+func createUserBuilder(user entity.User) (string, []interface{}, error) {
 	builder := sq.Insert(users).
 		Columns("email", "login", "password", "register_at").
-		Values(user.Email, user.Login, user.Password, time.Now()).
+		Values(user.Email, user.Login, user.Password, user.RegisteredAt).
 		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar)
 
@@ -31,7 +30,7 @@ func (r *DBRepo) CreateUser(ctx context.Context, user entity.User) (int, error) 
 		_ = tx.Rollback()
 	}()
 
-	query, args, err := getCreateUserQuery(user)
+	query, args, err := createUserBuilder(user)
 	if err != nil {
 		return 0, err
 	}
