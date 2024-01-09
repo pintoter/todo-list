@@ -6,12 +6,12 @@ import (
 	"github.com/pintoter/todo-list/internal/entity"
 )
 
-func (r *DBRepo) SignIn(ctx context.Context, login, password string) (entity.Token, error) {
+func (r *DBRepo) SignIn(ctx context.Context, login, password string) (entity.User, error) {
 
-	return entity.Token{}, nil
+	return entity.User{}, nil
 }
 
-func (r *DBRepo) RefreshToken(ctx context.Context, refreshToken string) (entity.Token, error) {
+func (r *DBRepo) RefreshToken(ctx context.Context, refreshToken string) (entity.User, error) {
 
-	return entity.Token{}, nil
+	return entity.User{}, nil
 }

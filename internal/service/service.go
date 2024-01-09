@@ -8,6 +8,11 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
+type Tokens struct {
+	AccessToken  string
+	RefreshToken string
+}
+
 type Config interface {
 	GetAccessTokenTTL() time.Duration
 	GetRefreshTokenTTL() time.Duration
@@ -31,12 +36,19 @@ type Service struct {
 	refreshTokenTTL time.Duration
 }
 
-func New(cfg Config, repo repository.Repository, hasher PasswordHasher, tokenManager TokenManager) *Service {
+type Deps struct {
+	Cfg          Config
+	Repo         repository.Repository
+	Hasher       PasswordHasher
+	TokenManager TokenManager
+}
+
+func New(deps Deps) *Service {
 	return &Service{
-		repo:            repo,
-		hasher:          hasher,
-		tokenManager:    tokenManager,
-		accessTokenTTL:  cfg.GetAccessTokenTTL(),
-		refreshTokenTTL: cfg.GetAccessTokenTTL(),
+		repo:            deps.Repo,
+		hasher:          deps.Hasher,
+		tokenManager:    deps.TokenManager,
+		accessTokenTTL:  deps.Cfg.GetAccessTokenTTL(),
+		refreshTokenTTL: deps.Cfg.GetRefreshTokenTTL(),
 	}
 }

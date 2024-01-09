@@ -6,12 +6,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pintoter/todo-list/internal/service"
+	"github.com/pintoter/todo-list/pkg/auth"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Handler struct {
-	router  *mux.Router
-	service *service.Service
+	router       *mux.Router
+	service      *service.Service
+	tokenManager auth.TokenManager
 }
 
 func NewHandler(service *service.Service) *Handler {
@@ -37,11 +39,11 @@ func (h *Handler) InitRoutes() {
 	{
 		auth.HandleFunc("/sign-up", h.signUp).Methods(http.MethodPost)
 		auth.HandleFunc("/sign-in", h.signIn).Methods(http.MethodPost)
-		
 	}
 
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()
 	{
+		v1.Use(h.authMiddleware)
 		v1.HandleFunc("/note", h.createNote).Methods(http.MethodPost)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.getNote).Methods(http.MethodGet)
 		v1.HandleFunc("/note/{id:[0-9]+}", h.updateNote).Methods(http.MethodPatch)

@@ -27,7 +27,13 @@ func (h *Handler) createNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
 	err := h.service.CreateNote(r.Context(), entity.Note{
+		UserId:      userId,
 		Title:       input.Title,
 		Description: input.Description,
 		Date:        input.DateFormatted,
@@ -63,7 +69,12 @@ func (h *Handler) getNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	note, err := h.service.GetById(r.Context(), id)
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
+	note, err := h.service.GetNoteById(r.Context(), id, userId)
 	if err != nil {
 		if errors.Is(err, entity.ErrNoteNotExists) {
 			renderJSON(w, r, http.StatusNotFound, errorResponse{entity.ErrNoteNotExists.Error()})
@@ -84,7 +95,7 @@ func (h *Handler) getNote(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes [get]
 func (h *Handler) getNotes(w http.ResponseWriter, r *http.Request) {
-	notes, err := h.service.GetNotes(r.Context())
+	notes, err := h.service.GetNotes(r.Context(), r.Context().Value("user_id").(int))
 	if err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return
@@ -111,7 +122,12 @@ func (h *Handler) getNotesExtended(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Limit, input.Status, input.DateFormatted)
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
+	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Limit, input.Status, input.DateFormatted, userId)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidStatus) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrInvalidStatus.Error()})
@@ -143,7 +159,12 @@ func (h *Handler) updateNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.UpdateNote(r.Context(), input.ID, input.Title, input.Description, input.Status)
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
+	err = h.service.UpdateNote(r.Context(), input.ID, input.Title, input.Description, input.Status, userId)
 	if err != nil {
 		if errors.Is(err, entity.ErrNoteNotExists) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteNotExists.Error()})
@@ -174,7 +195,12 @@ func (h *Handler) deleteNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.DeleteById(r.Context(), id); err != nil {
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
+	if err := h.service.DeleteNoteById(r.Context(), id, userId); err != nil {
 		if errors.Is(err, entity.ErrNoteExists) {
 			renderJSON(w, r, http.StatusBadRequest, errorResponse{entity.ErrNoteExists.Error()})
 			return
@@ -193,7 +219,12 @@ func (h *Handler) deleteNote(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorResponse
 // @Router /api/v1/notes [delete]
 func (h *Handler) deleteNotes(w http.ResponseWriter, r *http.Request) {
-	if err := h.service.DeleteNotes(r.Context()); err != nil {
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		...
+	}
+
+	if err := h.service.DeleteNotes(r.Context(), userId); err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{err.Error()})
 		return
 	}

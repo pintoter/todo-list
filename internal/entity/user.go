@@ -9,8 +9,3 @@ type User struct {
 	Password     string    `json:"password,omitempty"`
 	RegisteredAt time.Time `json:"registered_at,omitempty"`
 }
-
-type Token struct {
-	AccessToken  string
-	RefreshToken string
-}

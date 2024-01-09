@@ -10,8 +10,7 @@ import (
 )
 
 func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
-	// Добавить проверку на id != 0
-	if s.isNoteExists(ctx, note.Title) {
+	if s.isNoteExists(ctx, note.Title, note.UserId) {
 		return entity.ErrNoteExists
 	}
 
@@ -19,9 +18,8 @@ func (s *Service) CreateNote(ctx context.Context, note entity.Note) error {
 	return err
 }
 
-func (s *Service) GetNoteById(ctx context.Context, id int) (entity.Note, error) {
-	// Добавить проверку на id != 0
-	note, err := s.repo.GetNoteById(ctx, id)
+func (s *Service) GetNoteById(ctx context.Context, id, userId int) (entity.Note, error) {
+	note, err := s.repo.GetNoteById(ctx, id, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Note{}, entity.ErrNoteNotExists
@@ -33,9 +31,8 @@ func (s *Service) GetNoteById(ctx context.Context, id int) (entity.Note, error) 
 	return note, nil
 }
 
-func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
-	// Добавить проверку на id != 0
-	notes, err := s.repo.GetNotes(ctx)
+func (s *Service) GetNotes(ctx context.Context, userId int) ([]entity.Note, error) {
+	notes, err := s.repo.GetNotes(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -43,9 +40,8 @@ func (s *Service) GetNotes(ctx context.Context) ([]entity.Note, error) {
 	return notes, nil
 }
 
-func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time) ([]entity.Note, error) {
-	// Добавить проверку на id != 0
-	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date)
+func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, status string, date time.Time, userId int) ([]entity.Note, error) {
+	notes, err := s.repo.GetNotesExtended(ctx, limit, offset, status, date, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -53,31 +49,28 @@ func (s *Service) GetNotesExtended(ctx context.Context, limit, offset int, statu
 	return notes, nil
 }
 
-func (s *Service) UpdateNote(ctx context.Context, id int, title, description, status string) error {
-	// Добавить проверку на id != 0
-	if !s.isNoteExists(ctx, id) {
+func (s *Service) UpdateNote(ctx context.Context, id int, title, description, status string, userId int) error {
+	if !s.isNoteExists(ctx, id, userId) {
 		return entity.ErrNoteNotExists
 	}
 
-	if title != "" && s.isNoteExists(ctx, title) {
+	if title != "" && s.isNoteExists(ctx, title, userId) {
 		return entity.ErrNoteExists
 	}
 
-	return s.repo.UpdateNote(ctx, id, title, description, status)
+	return s.repo.UpdateNote(ctx, id, userId, title, description, status)
 }
 
-func (s *Service) DeleteNoteById(ctx context.Context, id int) error {
-	// Добавить проверку на id != 0
-	if s.isNoteExists(ctx, id) {
-		return s.repo.DeleteNoteById(ctx, id)
+func (s *Service) DeleteNoteById(ctx context.Context, id, userId int) error {
+	if s.isNoteExists(ctx, id, userId) {
+		return s.repo.DeleteNoteById(ctx, id, userId)
 	}
 
 	return entity.ErrNoteNotExists
 }
 
-func (s *Service) DeleteNotes(ctx context.Context) error {
-	// Добавить проверку на id != 0
-	err := s.repo.DeleteNotes(ctx)
+func (s *Service) DeleteNotes(ctx context.Context, userId int) error {
+	err := s.repo.DeleteNotes(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -85,14 +78,13 @@ func (s *Service) DeleteNotes(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) isNoteExists(ctx context.Context, data any) bool {
-	// Добавить проверку на id != 0
+func (s *Service) isNoteExists(ctx context.Context, data any, userId int) bool {
 	var err error
 	switch value := data.(type) {
 	case int:
-		_, err = s.repo.GetNoteById(ctx, value)
+		_, err = s.repo.GetNoteById(ctx, value, userId)
 	case string:
-		_, err = s.repo.GetNoteByTitle(ctx, value)
+		_, err = s.repo.GetNoteByTitle(ctx, value, userId)
 	}
 
 	return err == nil

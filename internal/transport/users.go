@@ -25,7 +25,6 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := h.service.SignUp(r.Context(), input.Email, input.Login, input.Password)
-
 	if err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{
 			Err: err.Error(),
