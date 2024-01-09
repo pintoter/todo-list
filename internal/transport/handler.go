@@ -39,6 +39,7 @@ func (h *Handler) InitRoutes() {
 	{
 		auth.HandleFunc("/sign-up", h.signUp).Methods(http.MethodPost)
 		auth.HandleFunc("/sign-in", h.signIn).Methods(http.MethodPost)
+		auth.HandleFunc("/refresh", h.refresh).Methods(http.MethodPost)
 	}
 
 	v1 := h.router.PathPrefix("/api/v1").Subrouter()

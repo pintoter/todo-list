@@ -29,7 +29,8 @@ func (h *Handler) createNote(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	err := h.service.CreateNote(r.Context(), entity.Note{
@@ -71,7 +72,8 @@ func (h *Handler) getNote(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	note, err := h.service.GetNoteById(r.Context(), id, userId)
@@ -124,7 +126,8 @@ func (h *Handler) getNotesExtended(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	notes, err := h.service.GetNotesExtended(r.Context(), input.Limit, (input.Page-1)*input.Limit, input.Status, input.DateFormatted, userId)
@@ -161,7 +164,8 @@ func (h *Handler) updateNote(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	err = h.service.UpdateNote(r.Context(), input.ID, input.Title, input.Description, input.Status, userId)
@@ -197,7 +201,8 @@ func (h *Handler) deleteNote(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	if err := h.service.DeleteNoteById(r.Context(), id, userId); err != nil {
@@ -221,7 +226,8 @@ func (h *Handler) deleteNote(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) deleteNotes(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("user_id").(int)
 	if !ok {
-		...
+		renderJSON(w, r, http.StatusInternalServerError, errorResponse{"bad userID"})
+		return
 	}
 
 	if err := h.service.DeleteNotes(r.Context(), userId); err != nil {

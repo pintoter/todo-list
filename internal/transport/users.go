@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -52,22 +53,34 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.SignIn(r.Context(), input.Login, input.Password)
+	tokens, err := h.service.SignIn(r.Context(), input.Login, input.Password)
 	if err != nil {
 		renderJSON(w, r, http.StatusInternalServerError, errorResponse{Err: err.Error()})
 		return
 	}
 
-	r.Header.Set("Set-Cookie", fmt.Sprintf("refresh-token=%s; HttpOnly", token.RefreshToken))
-	renderJSON(w, r, http.StatusOK, tokenResponse{Token: token.AccessToken})
+	r.Header.Set("Set-Cookie", fmt.Sprintf("refresh-token=%s; HttpOnly", tokens.RefreshToken))
+	renderJSON(w, r, http.StatusOK, tokenResponse{Token: tokens.AccessToken})
 }
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	refreshToken := r.Header.Get("refresh-token")
 
 	if refreshToken == "" {
-		renderJSON(w, r, http.StatusUnauthorized, errorResponse{Err: entity.ErrInvalidAuth.Error()})
+		renderJSON(w, r, http.StatusBadRequest, errorResponse{Err: "refresh-token not found"})
 		return
 	}
 
+	tokens, err := h.service.RefreshTokens(r.Context(), refreshToken)
+	if err != nil {
+		if errors.Is(err, entity.ErrSessionDoesntExist) {
+			renderJSON(w, r, http.StatusBadRequest, errorResponse{Err: err.Error()})
+		} else {
+			renderJSON(w, r, http.StatusInternalServerError, errorResponse{Err: err.Error()})
+		}
+		return
+	}
+
+	r.Header.Set("Set-Cookie", fmt.Sprintf("refresh-token=%s; HttpOnly", tokens.RefreshToken))
+	renderJSON(w, r, http.StatusOK, tokenResponse{Token: tokens.AccessToken})
 }

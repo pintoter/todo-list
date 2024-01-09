@@ -15,4 +15,6 @@ var (
 
 	ErrUserExists   = errors.New("user with input parameters already exists")
 	ErrUserNotExist = errors.New("user doesn't exist")
+
+	ErrSessionDoesntExist = errors.New("session doesn't exist")
 )
