@@ -95,10 +95,16 @@ func (a *Auth) GetRefreshTokenTTL() time.Duration {
 	return a.RefreshTokenTTL
 }
 
+type Project struct {
+	Name  string
+	Level string
+}
+
 type Config struct {
-	HTTP HTTP
-	DB   DB
-	Auth Auth
+	HTTP    HTTP
+	DB      DB
+	Auth    Auth
+	Project Project
 }
 
 var config = new(Config)

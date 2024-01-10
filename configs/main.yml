@@ -14,3 +14,7 @@ db:
 auth:
   accessTokenTTL: 15m
   refreshTokenTTL: 720h
+
+project:
+  name: todo-service
+  level: debug
