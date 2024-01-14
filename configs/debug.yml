@@ -17,4 +17,4 @@ auth:
 
 project:
   name: todo-service
-  level: info
+  level: debug

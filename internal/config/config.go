@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	configPath = "./config/config.yml"
+	configPath = "./configs"
+	configName = "debug"
 	envFile    = "./.env"
 )
 
@@ -116,7 +117,7 @@ func init() {
 		log.Fatal("loading env file")
 	}
 
-	viper.AddConfigPath("configs")
+	viper.AddConfigPath("./configs")
 	viper.SetConfigName("main")
 	err = viper.ReadInConfig()
 	if err != nil {

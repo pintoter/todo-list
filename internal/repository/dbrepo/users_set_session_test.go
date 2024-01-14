@@ -41,7 +41,7 @@ func TestSetUserSession(t *testing.T) {
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectExec := "UPDATE users SET refresh_token = $1, expires_at = $2 WHERE user_id = $3"
+				expectExec := "UPDATE users SET refresh_token = $1, expires_at = $2 WHERE id = $3"
 				mock.ExpectExec(regexp.QuoteMeta(expectExec)).
 					WithArgs(args.refreshToken, args.expiresAt, args.id).
 					WillReturnResult(driver.RowsAffected(0))
@@ -59,7 +59,7 @@ func TestSetUserSession(t *testing.T) {
 			mockBehavior: func(args args) {
 				mock.ExpectBegin()
 
-				expectExec := "UPDATE users SET refresh_token = $1, expires_at = $2 WHERE user_id = $3"
+				expectExec := "UPDATE users SET refresh_token = $1, expires_at = $2 WHERE id = $3"
 				mock.ExpectExec(regexp.QuoteMeta(expectExec)).WithArgs(args.refreshToken, args.expiresAt, args.id)
 
 				mock.ExpectRollback()

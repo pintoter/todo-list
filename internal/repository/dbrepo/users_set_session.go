@@ -3,7 +3,6 @@ package dbrepo
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -14,7 +13,7 @@ func setUserSessionBuilder(userId int, refreshToken string, expiresAt time.Time)
 	builder := sq.Update(users).
 		Set("refresh_token", refreshToken).
 		Set("expires_at", expiresAt).
-		Where(sq.Eq{"user_id": userId}).
+		Where(sq.Eq{"id": userId}).
 		PlaceholderFormat(sq.Dollar)
 
 	return builder.ToSql()
@@ -36,7 +35,6 @@ func (r *DBRepo) SetSession(ctx context.Context, userId int, session entity.Sess
 
 	_, err = tx.ExecContext(ctx, query, args...)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 

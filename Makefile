@@ -11,7 +11,12 @@ build:
 
 .PHONY: run
 run: build
-	docker-compose up --remove-orphans
+	docker-compose up --remove-orphans todo-app
+
+.PHONY: debug
+debug:
+	go mod download && CGO_ENABLED=0 GOOS=linux go build -gcflags "all=-N -l" -o ./.bin/todo-app ./cmd/app/main.go
+	docker-compose up --remove-orphans todo-app-debug
 
 rebuild: build
 	docker-compose up --remove-orphans --build
@@ -22,7 +27,7 @@ stop:
 
 .PHONY: migrations-create
 migrations-create:
-	migrate create -ext sql -dir $(MIGRATIONS_DIR) create_notes
+	migrate create -ext sql -dir $(MIGRATIONS_DIR) migration
 
 .PHONY: migrations-up
 migrations-up:

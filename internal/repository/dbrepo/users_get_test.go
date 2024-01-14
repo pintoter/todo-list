@@ -284,7 +284,7 @@ func TestGetUserByCredentials(t *testing.T) {
 	r := New(db)
 
 	type args struct {
-		email    string
+		login    string
 		password string
 	}
 
@@ -315,15 +315,15 @@ func TestGetUserByCredentials(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "email", "login", "password", "register_at"}).
 					AddRow(users[0].ID, users[0].Email, users[0].Login, users[0].Password, users[0].RegisteredAt)
 
-				expectExec := "SELECT id, email, login, password, register_at FROM users WHERE email = $1 AND password = $2"
+				expectExec := "SELECT id, email, login, password, register_at FROM users WHERE login = $1 AND password = $2"
 				mock.ExpectQuery(regexp.QuoteMeta(expectExec)).
-					WithArgs(args.email, args.password).
+					WithArgs(args.login, args.password).
 					WillReturnRows(rows)
 
 				mock.ExpectCommit()
 			},
 			args: args{
-				email:    "test@mail.ru",
+				login:    "test",
 				password: "hashed",
 			},
 			wantUser: users[0],
@@ -335,13 +335,13 @@ func TestGetUserByCredentials(t *testing.T) {
 
 				expectExec := "SELECT id, email, login, password, register_at FROM users WHERE email = $1 AND password = $2"
 				mock.ExpectQuery(regexp.QuoteMeta(expectExec)).
-					WithArgs(args.email, args.password).
+					WithArgs(args.login, args.password).
 					WillReturnError(errors.New("test error"))
 
 				mock.ExpectRollback()
 			},
 			args: args{
-				email: "failed",
+				login: "failed",
 			},
 			wantErr: true,
 		},
@@ -351,7 +351,7 @@ func TestGetUserByCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockBehavior(tt.args)
 
-			got, err := r.GetUserByCredentials(context.Background(), tt.args.email, tt.args.password)
+			got, err := r.GetUserByCredentials(context.Background(), tt.args.login, tt.args.password)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

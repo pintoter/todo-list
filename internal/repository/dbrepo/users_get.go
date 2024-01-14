@@ -119,7 +119,7 @@ func (r *DBRepo) GetUserByEmail(ctx context.Context, email string) (entity.User,
 	return user, tx.Commit()
 }
 
-func (r *DBRepo) GetUserByCredentials(ctx context.Context, email, password string) (entity.User, error) {
+func (r *DBRepo) GetUserByCredentials(ctx context.Context, login, password string) (entity.User, error) {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 	})
@@ -128,7 +128,7 @@ func (r *DBRepo) GetUserByCredentials(ctx context.Context, email, password strin
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	query, args, err := getUserBuilder(getInput{email: &email, password: &password})
+	query, args, err := getUserBuilder(getInput{login: &login, password: &password})
 	if err != nil {
 		return entity.User{}, err
 	}

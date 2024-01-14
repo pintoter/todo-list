@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -63,7 +62,7 @@ func Run() {
 	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()
-	log.Println("Starting server")
+	logger.InfoKV(ctx, "Starting server")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
@@ -86,13 +85,17 @@ func initLogger(ctx context.Context, cfg *config.Config) (syncFn func()) {
 		loggingLevel = zap.DebugLevel
 	}
 
+	loggerConfig := zap.NewProductionEncoderConfig()
+
+	loggerConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
 	consoleCore := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(loggerConfig),
 		os.Stderr,
 		zap.NewAtomicLevelAt(loggingLevel),
 	)
 
-	notSuggaredLogger := zap.New(consoleCore)
+	notSuggaredLogger := zap.New(consoleCore, zap.AddCaller())
 
 	sugarLogger := notSuggaredLogger.Sugar()
 	logger.SetLogger(sugarLogger.With(

@@ -23,7 +23,7 @@ type UsersRepository interface {
 	GetUserByID(ctx context.Context, id int) (entity.User, error)
 	GetUserByLogin(ctx context.Context, login string) (entity.User, error)
 	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
-	GetUserByCredentials(ctx context.Context, email, password string) (entity.User, error)
+	GetUserByCredentials(ctx context.Context, login, password string) (entity.User, error)
 	GetUserByRefreshToken(ctx context.Context, refreshToken string) (entity.User, error)
 	SetSession(ctx context.Context, id int, session entity.Session) error
 }

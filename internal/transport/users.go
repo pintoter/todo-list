@@ -45,7 +45,7 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} tokenResponse
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /auth/sign-up [post]
+// @Router /auth/sign-in [post]
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	var input signInInput
 	if err := input.Set(r); err != nil {
