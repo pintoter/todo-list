@@ -25,7 +25,8 @@ type errorResponse struct {
 }
 
 type tokenResponse struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 func renderJSON(w http.ResponseWriter, r *http.Request, code int, data any) {

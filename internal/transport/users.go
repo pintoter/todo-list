@@ -60,9 +60,19 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.Header.Set("Set-Cookie", fmt.Sprintf("refresh-token=%s; HttpOnly", tokens.RefreshToken))
-	renderJSON(w, r, http.StatusOK, tokenResponse{Token: tokens.AccessToken})
+	renderJSON(w, r, http.StatusOK, tokenResponse{AccessToken: tokens.AccessToken})
 }
 
+// @Summary User Refresh tokens
+// @Description Refresh tokens
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body signInInput true "input"
+// @Success 200 {object} tokenResponse
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /auth/refresh [post]
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	refreshToken := r.Header.Get("refresh-token")
 
@@ -82,5 +92,5 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.Header.Set("Set-Cookie", fmt.Sprintf("refresh-token=%s; HttpOnly", tokens.RefreshToken))
-	renderJSON(w, r, http.StatusOK, tokenResponse{Token: tokens.AccessToken})
+	renderJSON(w, r, http.StatusOK, tokenResponse{AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken})
 }

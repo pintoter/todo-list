@@ -58,7 +58,7 @@ func Run() {
 	}
 
 	service := service.New(deps)
-	handler := transport.NewHandler(service)
+	handler := transport.NewHandler(service, &cfg.Project)
 	server := server.New(&cfg.HTTP, handler)
 
 	server.Run()

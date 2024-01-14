@@ -97,7 +97,9 @@ definitions:
     type: object
   transport.tokenResponse:
     properties:
-      token:
+      access_token:
+        type: string
+      refresh_token:
         type: string
     type: object
   transport.updateNoteInput:
@@ -302,6 +304,36 @@ paths:
       summary: Get notes with filter
       tags:
       - notes
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh tokens
+      parameters:
+      - description: input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/transport.signInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/transport.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/transport.errorResponse'
+      summary: User Refresh tokens
+      tags:
+      - auth
   /auth/sign-in:
     post:
       consumes:

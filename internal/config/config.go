@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -13,8 +14,10 @@ import (
 
 const (
 	configPath = "./configs"
-	configName = "debug"
+	configName = "main"
 	envFile    = "./.env"
+	Production = "production"
+	Debug      = "debug"
 )
 
 type HTTP struct {
@@ -99,6 +102,11 @@ func (a *Auth) GetRefreshTokenTTL() time.Duration {
 type Project struct {
 	Name  string
 	Level string
+	Mode  string
+}
+
+func (p *Project) GetMode() string {
+	return p.Mode
 }
 
 type Config struct {
@@ -117,8 +125,8 @@ func init() {
 		log.Fatal("loading env file")
 	}
 
-	viper.AddConfigPath("./configs")
-	viper.SetConfigName("main")
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName(configName)
 	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("reading config err")
@@ -142,6 +150,11 @@ func Get() *Config {
 		err = envconfig.Process("auth", &config.Auth)
 		if err != nil {
 			log.Fatal("error: get env for auth")
+		}
+
+		config.Project.Mode = os.Getenv("MODE")
+		if config.Project.Mode == "" {
+			config.Project.Mode = Debug
 		}
 	})
 	return config

@@ -1,5 +1,13 @@
 include .env
 
+ifeq ($(version), debug)
+	BUILDER = go mod download && CGO_ENABLED=0 GOOS=linux go build -gcflags "all=-N -l" -o ./.bin/todo-app ./cmd/app/main.go
+	DOCKER_COMPOSE_FILE = -f docker-compose.debug.yml
+else 
+	BUILDER = go mod download && CGO_ENABLED=0 GOOS=linux go build -o ./.bin/todo-app ./cmd/app/main.go
+	DOCKER_COMPOSE_FILE = -f docker-compose.yml
+endif
+
 .DEFAULT_GOAL = run
 
 MIGRATIONS_DIR = ./migrations
@@ -7,16 +15,11 @@ POSTGRES_DSN = postgres://$(DB_USERNAME):$(DB_PASSWORD)@localhost:$(DB_PORT)/$(D
 
 .PHONY: build
 build:
-	go mod download && CGO_ENABLED=0 GOOS=linux go build -o ./.bin/todo-app ./cmd/app/main.go
+	$(BUILDER)
 
 .PHONY: run
 run: build
-	docker-compose up --remove-orphans todo-app
-
-.PHONY: debug
-debug:
-	go mod download && CGO_ENABLED=0 GOOS=linux go build -gcflags "all=-N -l" -o ./.bin/todo-app ./cmd/app/main.go
-	docker-compose up --remove-orphans todo-app-debug
+	docker-compose $(DOCKER_COMPOSE_FILE) up --remove-orphans todo-app
 
 rebuild: build
 	docker-compose up --remove-orphans --build

@@ -3,12 +3,17 @@ version: '3.9'
 services:
   todo-app:
     container_name: todo-app
-    build: 
-      dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
     env_file: 
       - .env
     ports:
       - "8080:8080"
+      - "2345:2345"
+    volumes:
+      - ./bin/:/root/.bin/
+      - ./configs/:/root/configs/
     depends_on:
       - postgres
     environment:

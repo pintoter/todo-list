@@ -5,10 +5,15 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/pintoter/todo-list/internal/config"
 	"github.com/pintoter/todo-list/internal/service"
 	"github.com/pintoter/todo-list/pkg/auth"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
+
+type Config interface {
+	GetMode() string
+}
 
 type Handler struct {
 	router       *mux.Router
@@ -16,10 +21,19 @@ type Handler struct {
 	tokenManager auth.TokenManager
 }
 
-func NewHandler(service *service.Service) *Handler {
+func NewHandler(service *service.Service, cfg Config) *Handler {
 	handler := &Handler{
 		router:  mux.NewRouter(),
 		service: service,
+	}
+
+	if cfg.GetMode() != config.Production {
+		handler.router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+			httpSwagger.DeepLinking(true),
+			httpSwagger.DocExpansion("none"),
+			httpSwagger.DomID("swagger-ui"),
+		)).Methods(http.MethodGet)
 	}
 
 	handler.InitRoutes()
@@ -28,13 +42,6 @@ func NewHandler(service *service.Service) *Handler {
 }
 
 func (h *Handler) InitRoutes() {
-	h.router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
-		httpSwagger.DeepLinking(true),
-		httpSwagger.DocExpansion("none"),
-		httpSwagger.DomID("swagger-ui"),
-	)).Methods(http.MethodGet)
-
 	auth := h.router.PathPrefix("/auth").Subrouter()
 	{
 		auth.HandleFunc("/sign-up", h.signUp).Methods(http.MethodPost)
