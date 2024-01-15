@@ -57,6 +57,92 @@ make
 3. **To test the service's functionality, you can navigate to the address
   http://localhost:8080/swagger/index.html to access the Swagger documentation.**
 
+4. **Project's structure**
+```bash
+.
+├── Dockerfile
+├── Dockerfile.debug
+├── Makefile
+├── README.md
+├── bin
+├── cmd
+│   └── app
+│       └── main.go
+├── configs
+│   └── main.yml
+├── docker-compose.debug.yml
+├── docker-compose.yml
+├── docs
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
+├── go.mod
+├── go.sum
+├── internal
+│   ├── app
+│   │   └── app.go
+│   ├── config
+│   │   └── config.go
+│   ├── database
+│   │   └── migrations.go
+│   ├── entity
+│   │   ├── errors.go
+│   │   ├── note.go
+│   │   ├── repository.go
+│   │   ├── session.go
+│   │   └── user.go
+│   ├── repository
+│   │   ├── dbrepo
+│   │   │   ├── notes_create.go
+│   │   │   ├── notes_create_test.go
+│   │   │   ├── notes_delete.go
+│   │   │   ├── notes_delete_test.go
+│   │   │   ├── notes_get.go
+│   │   │   ├── notes_get_test.go
+│   │   │   ├── notes_update.go
+│   │   │   ├── notes_update_test.go
+│   │   │   ├── repository.go
+│   │   │   ├── users.go
+│   │   │   ├── users_create.go
+│   │   │   ├── users_create_test.go
+│   │   │   ├── users_get.go
+│   │   │   ├── users_get_test.go
+│   │   │   ├── users_set_session.go
+│   │   │   └── users_set_session_test.go
+│   │   └── repository.go
+│   ├── server
+│   │   └── server.go
+│   ├── service
+│   │   ├── mocks
+│   │   │   └── mock.go
+│   │   ├── notes.go
+│   │   ├── service.go
+│   │   └── users.go
+│   └── transport
+│       ├── handler.go
+│       ├── middleware.go
+│       ├── notes.go
+│       ├── notes_test.go
+│       ├── request.go
+│       ├── response.go
+│       └── users.go
+├── migrations
+│   ├── 20231128193639_create_notes.down.sql
+│   ├── 20231128193639_create_notes.up.sql
+│   ├── 20231218171050_create_users.down.sql
+│   └── 20231218171050_create_users.up.sql
+└── pkg
+    ├── auth
+    │   └── manager.go
+    ├── database
+    │   └── postgres
+    │       └── postgres.go
+    ├── hash
+    │   └── hash.go
+    └── logger
+        └── logger.go
+```
+
 ---
 
 ## Examples of requests

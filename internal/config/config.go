@@ -109,11 +109,20 @@ func (p *Project) GetMode() string {
 	return p.Mode
 }
 
+type Telemetry struct {
+	GraylogPath string
+}
+
+func (t *Telemetry) GetGraylogPath() string {
+	return t.GraylogPath
+}
+
 type Config struct {
-	HTTP    HTTP
-	DB      DB
-	Auth    Auth
-	Project Project
+	HTTP      HTTP
+	DB        DB
+	Auth      Auth
+	Project   Project
+	Telemetry Telemetry
 }
 
 var config = new(Config)

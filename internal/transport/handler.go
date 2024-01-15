@@ -1,13 +1,13 @@
 package transport
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/pintoter/todo-list/internal/config"
 	"github.com/pintoter/todo-list/internal/service"
 	"github.com/pintoter/todo-list/pkg/auth"
+	"github.com/pintoter/todo-list/pkg/logger"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -63,6 +63,6 @@ func (h *Handler) InitRoutes() {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[Request] [%s] %s - [FROM]: %s", r.Method, r.URL, r.RemoteAddr)
+	logger.DebugKV(r.Context(), "new request", "Method", r.Method, "url", r.URL, "addr:", r.RemoteAddr)
 	h.router.ServeHTTP(w, r)
 }

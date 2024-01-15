@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/pintoter/todo-list/internal/repository/dbrepo"
+	gelf "github.com/snovichkov/zap-gelf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -89,13 +90,21 @@ func initLogger(ctx context.Context, cfg *config.Config) (syncFn func()) {
 
 	loggerConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	consoleCore := zapcore.NewCore(
-		zapcore.NewJSONEncoder(loggerConfig),
-		os.Stderr,
-		zap.NewAtomicLevelAt(loggingLevel),
-	)
+	// consoleCore := zapcore.NewCore(
+	// 	zapcore.NewJSONEncoder(loggerConfig),
+	// 	os.Stderr,
+	// 	zap.NewAtomicLevelAt(loggingLevel),
+	// )
 
-	notSuggaredLogger := zap.New(consoleCore, zap.AddCaller())
+	gelfCore, err := gelf.NewCore(
+		gelf.Addr(cfg.Telemetry.GetGraylogPath()),
+		gelf.Level(loggingLevel),
+	)
+	if err != nil {
+		logger.FatalKV(ctx, "graylog constructor err", "err", err)
+	}
+
+	notSuggaredLogger := zap.New(gelfCore, zap.AddCaller())
 
 	sugarLogger := notSuggaredLogger.Sugar()
 	logger.SetLogger(sugarLogger.With(

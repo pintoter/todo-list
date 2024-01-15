@@ -18,7 +18,6 @@ type Config interface {
 
 func Do(cfg Config) error {
 	m, err := migrate.New(sourceURL, cfg.GetDSN())
-
 	if err != nil {
 		return err
 	}
